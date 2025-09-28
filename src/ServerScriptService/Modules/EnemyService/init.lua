@@ -15,7 +15,7 @@ function EnemyService:Create(player: Player, enemySpawn: Part)
 		local newEnemyHumanoidRootPart = newEnemy:WaitForChild("HumanoidRootPart")
 		newEnemy.Parent = workspace.runtime[player.UserId]
 		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
-
+		newEnemyHumanoidRootPart:SetNetworkOwner(player)
 		-- Procurando o Objetivo
 		local enemyTarget = EnemyService:GetEnemyTargert(player)
 		task.wait(0.5)
