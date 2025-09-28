@@ -1,0 +1,52 @@
+local StartGameService = {}
+local Players = game:GetService("Players")
+
+-- Init Bridg Net
+local ServerScriptService = game:GetService("ServerScriptService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = ReplicatedStorage.Utility
+local BridgeNet2 = require(Utility.BridgeNet2)
+local BaseService = require(ServerScriptService.Modules.BaseService)
+local MapService = require(ServerScriptService.Modules.MapService)
+local bridge = BridgeNet2.ReferenceBridge("StartGameService")
+local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
+local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
+local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
+-- End Bridg Net
+
+local playerInitializer = {}
+
+function StartGameService:Init()
+	StartGameService:InitBridgeListener()
+
+	Players.PlayerRemoving:Connect(function(player)
+		playerInitializer[player] = false
+	end)
+end
+
+function StartGameService:InitBridgeListener()
+	bridge.OnServerInvoke = function(player, data)
+		if data[actionIdentifier] == "Start" then
+			-- Segurança para evitar que seja inicializado mais de uma vez
+			if playerInitializer[player] then
+				warn("User already configured")
+				return false
+			end
+
+			-- Criando a pasta do Player
+			StartGameService:CreatePlayerFolder(player)
+
+			-- Alocando a Base
+			BaseService:Allocate(player)
+
+			MapService:InitMapFromPlayer(player)
+		end
+	end
+end
+
+function StartGameService:CreatePlayerFolder(player: Player)
+	local folder = Instance.new("Folder", workspace.runtime)
+	folder.Name = player.UserId
+end
+
+return StartGameService

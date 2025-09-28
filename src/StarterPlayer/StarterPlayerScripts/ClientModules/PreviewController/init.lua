@@ -1,0 +1,162 @@
+local PreviewController = {}
+
+-- Init Bridg Net
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = ReplicatedStorage.Utility
+local BridgeNet2 = require(Utility.BridgeNet2)
+local bridge = BridgeNet2.ReferenceBridge("PreviewService")
+local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
+local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
+local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
+-- End Bridg Net
+
+local UserInputService = game:GetService("UserInputService")
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local mouse = player:GetMouse()
+
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
+
+local BaseController = require(Players.LocalPlayer.PlayerScripts.ClientModules.BaseController)
+local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
+
+local currentItemName = ""
+function PreviewController:Init()
+	PreviewController:InitButtonListerns()
+end
+
+function PreviewController:InitButtonListerns()
+	UserInputService.InputBegan:Connect(function(input, gameProcessedEvent)
+		if gameProcessedEvent then
+			return
+		end -- ignora se o jogador estiver digitando em um TextBox
+
+		if input.KeyCode == Enum.KeyCode.R then
+			local slot = nil
+			local subSlot = nil
+			if workspace:FindFirstChild("Preview") then
+				local preview = workspace.Preview
+				local regionSize = Vector3.new(2, 50, 2)
+
+				local detector = Instance.new("Part")
+				detector.Size = regionSize
+				detector.Position = Vector3.new(preview.Position.X, 6.25, preview.Position.Z)
+				detector.Anchored = true
+				detector.CanCollide = true -- precisa ser true para GetTouchingParts
+				detector.Transparency = 1
+				detector.Parent = workspace
+
+				-- Pega todas as partes que estão tocando
+				local touching = detector:GetTouchingParts()
+
+				local slot, subSlot
+				for _, p in ipairs(touching) do
+					if p:GetAttribute("GRID_TYPE") == "SUB_SLOT" then
+						slot = p.Parent.Name
+						subSlot = p.Name
+					end
+				end
+
+				detector:Destroy()
+
+				local result = bridge:InvokeServerAsync({
+					[actionIdentifier] = "SetItem",
+					data = {
+						ItemName = currentItemName,
+						Slot = slot,
+						SubSlot = subSlot,
+					},
+				})
+			end
+		end
+	end)
+end
+
+function PreviewController:GetStartBasePart()
+	local base = BaseController:GetBase()
+
+	if base then
+		local baseTemplate = ClientUtil:WaitForDescendants(base, "baseTemplate")
+
+		local baseSlots = ClientUtil:WaitForDescendants(baseTemplate, "baseSlots")
+
+		local slots = ClientUtil:WaitForDescendants(baseSlots, "slots")
+
+		local model1 = ClientUtil:WaitForDescendants(slots, "1")
+
+		local part1 = ClientUtil:WaitForDescendants(model1, "1")
+
+		return part1.Position
+	end
+end
+
+function PreviewController:Start(blockName: string)
+	currentItemName = blockName
+	local gridSize = Vector3.new(4, 2, 4) -- tamanho da grid
+	local gridOrigin = PreviewController:GetStartBasePart() -- ponto inicial da grid (ajuste para sua grid real)
+
+	-- Remove qualquer preview antigo
+	if workspace:FindFirstChild("Preview") then
+		workspace.Preview:Destroy()
+	end
+
+	local model = ReplicatedStorage.developer.units.blocks[blockName]:Clone()
+	model.Transparency = 0.5
+	model.CanCollide = false
+	model.Anchored = false
+
+	-- Ignora o player e o preview no raycast
+	local raycastParams = RaycastParams.new()
+	raycastParams.FilterType = Enum.RaycastFilterType.Exclude
+	raycastParams.FilterDescendantsInstances = { player.Character, model }
+
+	local function getMousePosition()
+		local unitRay = mouse.UnitRay
+		local raycastResult = workspace:Raycast(unitRay.Origin, unitRay.Direction * 500, raycastParams)
+		if raycastResult then
+			return raycastResult.Position
+		end
+		return nil
+	end
+
+	-- Função para alinhar com a grid
+	local function snapToGridXZ(pos)
+		local relative = pos - gridOrigin
+
+		-- Calcula X e Z alinhados à grid
+		local x = math.floor(relative.X / gridSize.X + 0.5) * gridSize.X
+		local z = math.floor(relative.Z / gridSize.Z + 0.5) * gridSize.Z
+
+		-- Base do modelo exatamente na grid origin
+		local y = gridOrigin.Y + (gridSize.Y / 2) + (model.Size.Y / 2)
+		x = x + gridOrigin.X
+		z = z + gridOrigin.Z
+
+		return Vector3.new(x, y, z)
+	end
+
+	local startPos = getMousePosition()
+	if startPos then
+		local snapped = snapToGridXZ(startPos)
+		model:PivotTo(CFrame.new(snapped))
+	end
+
+	model.Name = "Preview"
+	model.Parent = workspace
+
+	local smoothFactor = 0.4 -- movimento suave
+	local currentPosition = model:GetPivot().Position
+
+	self.previewConnection = RunService.RenderStepped:Connect(function()
+		local targetPos = getMousePosition()
+		if targetPos then
+			local snapped = snapToGridXZ(targetPos)
+			-- Movimento direto, sem Lerp, para “pular” entre células
+			model:PivotTo(CFrame.new(snapped) * CFrame.Angles(0, 0, 0))
+		end
+	end)
+end
+
+return PreviewController
