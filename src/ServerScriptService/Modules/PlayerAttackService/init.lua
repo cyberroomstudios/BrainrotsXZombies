@@ -46,54 +46,9 @@ function PlayerAttackService:OnPlayerAttack(player: Player)
 			continue
 		end
 
-		-- Adiciona o evento só uma vez
-		if not vCharacter:GetAttribute("RagdollConnected") then
-			vCharacter:SetAttribute("RagdollConnected", true)
-			vHumanoid.Died:Connect(function()
-				PlayerAttackService:MakeRagdoll(vCharacter)
-				task.delay(2, function()
-					part.Parent:Destroy()
-				end)
-			end)
-		end
-
 		-- Aplica o dano
-		vHumanoid:TakeDamage(1)
+		vHumanoid:TakeDamage(50)
 	end
 end
 
-function PlayerAttackService:MakeRagdoll(character)
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
-	if humanoid then
-		humanoid:ChangeState(Enum.HumanoidStateType.Physics)
-		humanoid.PlatformStand = true
-	end
-
-	for _, motor in ipairs(character:GetDescendants()) do
-		if motor:IsA("Motor6D") then
-			local part0 = motor.Part0
-			local part1 = motor.Part1
-
-			local att0 = Instance.new("Attachment")
-			att0.CFrame = motor.C0
-			att0.Parent = part0
-
-			local att1 = Instance.new("Attachment")
-			att1.CFrame = motor.C1
-			att1.Parent = part1
-
-			local ballSocket = Instance.new("BallSocketConstraint")
-			ballSocket.Attachment0 = att0
-			ballSocket.Attachment1 = att1
-			ballSocket.LimitsEnabled = true
-			ballSocket.TwistLimitsEnabled = true
-			ballSocket.UpperAngle = 90
-			ballSocket.TwistLowerAngle = -45
-			ballSocket.TwistUpperAngle = 45
-			ballSocket.Parent = part0
-
-			motor:Destroy()
-		end
-	end
-end
 return PlayerAttackService

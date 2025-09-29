@@ -21,12 +21,19 @@ end
 function WaveService:InitBridgeListener()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "StartWave" then
+
 			WaveService:StartWave(player)
 		end
 	end
 end
 
 function WaveService:StartWave(player: Player)
+	if player:GetAttribute("GAME_ON") then
+		return
+	end
+
+	player:SetAttribute("GAME_ON", true)
+	
 	task.spawn(function()
 		local currentWave = player:SetAttribute("CURRENT_WAVE") or 1
 		WaveService:SpawnEnemy(player, currentWave)

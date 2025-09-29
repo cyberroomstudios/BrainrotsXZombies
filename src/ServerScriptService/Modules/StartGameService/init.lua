@@ -45,8 +45,11 @@ function StartGameService:InitBridgeListener()
 end
 
 function StartGameService:CreatePlayerFolder(player: Player)
-	local folder = Instance.new("Folder", workspace.runtime)
-	folder.Name = player.UserId
+	local playerFolder = Instance.new("Folder", workspace.runtime)
+	playerFolder.Name = player.UserId
+
+	local enemysFolder = Instance.new("Folder", playerFolder)
+	enemysFolder.Name = "Enemys"
 end
 
 return StartGameService

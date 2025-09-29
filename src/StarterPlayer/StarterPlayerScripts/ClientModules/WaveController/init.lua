@@ -19,4 +19,5 @@ function WaveController:Start(player: Player)
 	})
 end
 
+
 return WaveController
