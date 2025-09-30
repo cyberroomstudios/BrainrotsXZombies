@@ -1,15 +1,15 @@
 local Waves = {
     Cicle = {
 		Size = 25,
-		CategoryEnemys = {
+		EnemiesCategory = {
 			"type1",
 			"type2",
 			"type3",
 		},
-		Boos = {
-			"Boos1",
-			"Boos2",
-			"Boos3",
+		Boss = {
+			"Boss1",
+			"Boss2",
+			"Boss3",
 		},
 		Colors = {
 			"",

@@ -5,8 +5,47 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 
+-- Init Bridg Net
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = ReplicatedStorage.Utility
+local BridgeNet2 = require(Utility.BridgeNet2)
+local bridge = BridgeNet2.ReferenceBridge("DiedService")
+local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
+local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
+local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
+-- End Bridg Net
+
 local ENEMY_STOP_DISTANCE = 0
+
 function EnemyService:Init() end
+
+function EnemyService:SpawnEnemy(player: Player, currentWave: number)
+	local base = BaseService:GetBase(player)
+	local enemyFolder = UtilService:WaitForDescendants(base, "baseTemplate", "enemy")
+	local enemySpawns = {}
+
+	for _, value in enemyFolder:GetChildren() do
+		table.insert(enemySpawns, value)
+	end
+
+	local oldSpawn = nil
+	if base then
+		for i = 1, currentWave do
+			task.spawn(function()
+				local enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
+
+				while oldSpawn and enemySpawn == oldSpawn do
+					enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
+					task.wait()
+				end
+				oldSpawn = enemySpawn
+
+				EnemyService:Create(player, enemySpawn)
+			end)
+			task.wait(0.2)
+		end
+	end
+end
 
 function EnemyService:Create(player: Player, enemySpawn: Part)
 	task.spawn(function()
@@ -43,35 +82,67 @@ function EnemyService:StartAttackThread(player: Player, enemy: Model, hrp: BaseP
 
 			for _, part in collidingParts do
 				if part:GetAttribute("IS_HEART") then
-					print("Tirando Vida ")
-					local currentLife = player:GetAttribute("BASE_LIFE") or 100
-					currentLife = currentLife - 10
-					player:SetAttribute("BASE_LIFE", currentLife)
+					EnemyService:HitHeart(player, part)
 				end
 			end
-
 			task.wait(1)
 		end
 	end)
 end
 
+function EnemyService:HitHeart(player: Player, heartPart: Part)
+	local currentLife = player:GetAttribute("BASE_LIFE") or 100
+	currentLife = currentLife - 10
+
+	if currentLife < 0 then
+		currentLife = 0
+	end
+	player:SetAttribute("BASE_LIFE", currentLife)
+
+	if currentLife == 0 then
+		EnemyService:KillPlayer(player)
+	end
+end
+
+function EnemyService:KillPlayer(player: Player)
+	player:SetAttribute("GAME_ON", false)
+	player:SetAttribute("CURRENT_WAVE", 1)
+	local enemysFolder = workspace.runtime[player.UserId].Enemys
+
+	for _, value in enemysFolder:GetChildren() do
+		value:Destroy()
+	end
+
+	bridge:Fire(player, {
+		[actionIdentifier] = "ShowYouDiedScreen",
+	})
+end
 function EnemyService:CreateOndiedListener(player: Player, enemy: Model)
 	local humanoid = enemy.Humanoid
 	humanoid.Died:Connect(function()
-		print("Morreu")
 		EnemyService:MakeRagdoll(enemy)
 		task.delay(2, function()
 			humanoid.Parent:Destroy()
+			task.wait(1)
+			EnemyService:ReportNewDied(player)
 		end)
 	end)
 end
 
 function EnemyService:ReportNewDied(player: Player)
-	local enemysFolder = workspace.runtime[player.UserId].Enemys:GetChildren()
-	local hasEnemy = true
+	local enemysFolder = workspace.runtime[player.UserId].Enemys
+	local hasEnemy = false
 
 	for _, value in enemysFolder:GetChildren() do
-		
+		hasEnemy = true
+	end
+
+	if not hasEnemy then
+		local currentWave = player:GetAttribute("CURRENT_WAVE") or 1
+		currentWave = currentWave + 1
+
+		player:SetAttribute("CURRENT_WAVE", currentWave)
+		EnemyService:SpawnEnemy(player, currentWave)
 	end
 end
 

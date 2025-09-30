@@ -67,6 +67,14 @@ function HudController:InitGameStatusListener()
 			currentWave.Visible = true
 			baseLife.Visible = true
 		else
+			fightButton.Visible = true
+			baseButton.Visible = true
+			storeButton.Visible = true
+			backpackFrame.Visible = true
+
+			stopButton.Visible = false
+			currentWave.Visible = false
+			baseLife.Visible = false
 		end
 	end)
 end
