@@ -23,6 +23,7 @@ local BaseController = require(Players.LocalPlayer.PlayerScripts.ClientModules.B
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
 
 local currentItemName = ""
+local currenItemType = ""
 function PreviewController:Init()
 	PreviewController:InitButtonListerns()
 end
@@ -38,11 +39,12 @@ function PreviewController:InitButtonListerns()
 			local subSlot = nil
 			if workspace:FindFirstChild("Preview") then
 				local preview = workspace.Preview
+				local previewPos = preview:GetPivot().Position
 				local regionSize = Vector3.new(2, 50, 2)
 
 				local detector = Instance.new("Part")
 				detector.Size = regionSize
-				detector.Position = Vector3.new(preview.Position.X, 6.25, preview.Position.Z)
+				detector.CFrame = CFrame.new(previewPos.X, 6.25, previewPos.Z)
 				detector.Anchored = true
 				detector.CanCollide = true -- precisa ser true para GetTouchingParts
 				detector.Transparency = 1
@@ -64,6 +66,7 @@ function PreviewController:InitButtonListerns()
 				local result = bridge:InvokeServerAsync({
 					[actionIdentifier] = "SetItem",
 					data = {
+						ItemType = currenItemType,
 						ItemName = currentItemName,
 						Slot = slot,
 						SubSlot = subSlot,
@@ -92,8 +95,28 @@ function PreviewController:GetStartBasePart()
 	end
 end
 
-function PreviewController:Start(blockName: string)
-	currentItemName = blockName
+function PreviewController:GetItemFromTypeAndName(unitType: string, unitName: string)
+	local unitsFolder = ReplicatedStorage.developer.units
+	local items = {
+		["blocks"] = unitsFolder.blocks,
+		["melee"] = unitsFolder.melee,
+		["ranged"] = unitsFolder.ranged,
+		["trap"] = unitsFolder.trap,
+	}
+
+	if items[unitType] then
+		local item = items[unitType]:FindFirstChild(unitName)
+
+		if item then
+			return item:Clone()
+		end
+	end
+end
+
+function PreviewController:Start(unitType: string, unitName: string)
+	currentItemName = unitName
+	currenItemType = unitType
+
 	local gridSize = Vector3.new(4, 2, 4) -- tamanho da grid
 	local gridOrigin = PreviewController:GetStartBasePart() -- ponto inicial da grid (ajuste para sua grid real)
 
@@ -102,10 +125,11 @@ function PreviewController:Start(blockName: string)
 		workspace.Preview:Destroy()
 	end
 
-	local model = ReplicatedStorage.developer.units.blocks[blockName]:Clone()
-	model.Transparency = 0.5
-	model.CanCollide = false
-	model.Anchored = false
+	local model = PreviewController:GetItemFromTypeAndName(unitType, unitName)
+	model.PrimaryPart.Transparency = 0.5
+	model.PrimaryPart.CanCollide = false
+	model.PrimaryPart.CanCollide = false
+	model.PrimaryPart.Anchored = true
 
 	-- Ignora o player e o preview no raycast
 	local raycastParams = RaycastParams.new()
@@ -129,8 +153,14 @@ function PreviewController:Start(blockName: string)
 		local x = math.floor(relative.X / gridSize.X + 0.5) * gridSize.X
 		local z = math.floor(relative.Z / gridSize.Z + 0.5) * gridSize.Z
 
+		-- Pega altura e centro do modelo
+		local modelSize = model:GetExtentsSize()
+		local modelPivot = model:GetPivot().Position
+
 		-- Base do modelo exatamente na grid origin
-		local y = gridOrigin.Y + (gridSize.Y / 2) + (model.Size.Y / 2)
+		local y = 8.501
+
+		-- Ajusta posição final
 		x = x + gridOrigin.X
 		z = z + gridOrigin.Z
 

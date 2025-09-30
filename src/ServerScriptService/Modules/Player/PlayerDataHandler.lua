@@ -29,7 +29,8 @@ local cachedJoinTimestamps = {}
 local dataTemplate = {
 	totalPlaytime = 0,
 	itemsOnMap = {},
-	itemOnMapId = 0
+	itemOnMapId = 0,
+	unitsBackpack = {},
 }
 
 local ProfileService = require(ServerScriptService.libs.ProfileService)

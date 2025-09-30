@@ -23,18 +23,19 @@ end
 function PreviewService:InitBridgeListener()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "SetItem" then
+			local itemType = data.data.ItemType
 			local itemName = data.data.ItemName
 			local slot = data.data.Slot
 			local subSlot = data.data.SubSlot
 
-			PreviewService:SetItem(player, itemName, slot, subSlot)
+			PreviewService:SetItem(player, itemType, itemName, slot, subSlot)
 		end
 	end
 end
 
-function PreviewService:SetItem(player: Player, itemName: string, slot: number, subSlot: number)
-	MapService:SetItemOnMap(player, itemName, slot, subSlot)
-	MapService:AddItemInDataBase(player, itemName, slot, subSlot)
+function PreviewService:SetItem(player: Player, itemType: string, itemName: string, slot: number, subSlot: number)
+	MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot)
+	MapService:AddItemInDataBase(player, itemType, itemName, slot, subSlot)
 end
 
 return PreviewService

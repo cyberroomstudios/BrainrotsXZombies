@@ -9,10 +9,11 @@ local BaseService = require(ServerScriptService.Modules.BaseService)
 
 function MapService:Init() end
 
-function MapService:AddItemInDataBase(player: Player, itemName: string, slot: string, subSlot: string)
+function MapService:AddItemInDataBase(player: Player, itemType: string, itemName: string, slot: string, subSlot: string)
 	local itemOnMapId = PlayerDataHandler:Get(player, "itemOnMapId")
 	local data = {
 		Id = itemOnMapId + 1,
+		Type = itemType,
 		Name = itemName,
 		Slot = slot,
 		SubSlot = subSlot,
@@ -26,7 +27,25 @@ function MapService:AddItemInDataBase(player: Player, itemName: string, slot: st
 	end)
 end
 
-function MapService:SetItemOnMap(player: Player, itemName: string, slot: number, subSlot: number)
+function MapService:GetItemFromTypeAndName(unitType: string, unitName: string)
+	local unitsFolder = ReplicatedStorage.developer.units
+	local items = {
+		["blocks"] = unitsFolder.blocks,
+		["melee"] = unitsFolder.melee,
+		["ranged"] = unitsFolder.ranged,
+		["trap"] = unitsFolder.trap,
+	}
+
+	if items[unitType] then
+		local item = items[unitType]:FindFirstChild(unitName)
+
+		if item then
+			return item:Clone()
+		end
+	end
+end
+
+function MapService:SetItemOnMap(player: Player, unitType: string, unitName: string, slot: number, subSlot: number)
 	local base = BaseService:GetBase(player)
 	if base then
 		local baseTemplate = base.baseTemplate
@@ -42,10 +61,11 @@ function MapService:SetItemOnMap(player: Player, itemName: string, slot: number,
 		local subSlotPart = UtilService:WaitForDescendants(slotModel, subSlot)
 
 		local position = subSlotPart.Position
-		local item = ReplicatedStorage.developer.units.blocks[itemName]:Clone()
-		local yOffset = (subSlotPart.Size.Y / 2) + (item.Size.Y / 2)
-		item.Position = position + Vector3.new(0, yOffset, 0)
-		item.Anchored = true
+		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
+		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
+
+		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)))
+
 		item.Parent = workspace
 	end
 end
@@ -54,11 +74,12 @@ function MapService:InitMapFromPlayer(player: Player)
 	local items = PlayerDataHandler:Get(player, "itemsOnMap")
 
 	for _, item in items do
+		local itemType = item.Type
 		local itemName = item.Name
 		local slot = item.Slot
 		local subSlot = item.SubSlot
 
-		MapService:SetItemOnMap(player, itemName, slot, subSlot)
+		MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot)
 	end
 end
 return MapService

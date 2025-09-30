@@ -61,7 +61,7 @@ function EnemyService:Create(player: Player, enemySpawn: Part)
 		task.wait(0.5)
 
 		-- Cria o evento de ouvir quando o enemy morre
-		EnemyService:CreateOndiedListener(player, newEnemy)
+		EnemyService:CreateOnDiedListener(player, newEnemy)
 
 		-- Cria a thread para ficar atacando
 		EnemyService:StartAttackThread(player, newEnemy, newEnemyHumanoidRootPart)
@@ -117,7 +117,8 @@ function EnemyService:KillPlayer(player: Player)
 		[actionIdentifier] = "ShowYouDiedScreen",
 	})
 end
-function EnemyService:CreateOndiedListener(player: Player, enemy: Model)
+
+function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)
 	local humanoid = enemy.Humanoid
 	humanoid.Died:Connect(function()
 		EnemyService:MakeRagdoll(enemy)

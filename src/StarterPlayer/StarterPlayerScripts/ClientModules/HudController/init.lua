@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local TeleportController = require(Players.LocalPlayer.PlayerScripts.ClientModules.TeleportController)
 local WaveController = require(Players.LocalPlayer.PlayerScripts.ClientModules.WaveController)
-local BlockScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.BlockScreenController)
+local UnitsScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.UnitsScreenController)
 
 local storeButton
 local fightButton
@@ -49,7 +49,7 @@ function HudController:InitButtonListerns()
 	end)
 
 	toolsButton.MouseButton1Click:Connect(function()
-		BlockScreenController:Open()
+		UnitsScreenController:Open()
 	end)
 end
 
