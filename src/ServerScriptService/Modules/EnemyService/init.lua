@@ -52,6 +52,7 @@ function EnemyService:Create(player: Player, enemySpawn: Part)
 		-- Criando um novo Enemy
 		local newEnemy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
 		local newEnemyHumanoidRootPart = newEnemy:WaitForChild("HumanoidRootPart")
+		newEnemy:SetAttribute("IS_ENEMY", true)
 		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
 		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
 		newEnemyHumanoidRootPart:SetNetworkOwner(player)

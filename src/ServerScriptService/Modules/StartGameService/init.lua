@@ -50,6 +50,12 @@ function StartGameService:CreatePlayerFolder(player: Player)
 
 	local enemysFolder = Instance.new("Folder", playerFolder)
 	enemysFolder.Name = "Enemys"
+
+	local rangedUnitFolder = Instance.new("Folder", playerFolder)
+	rangedUnitFolder.Name = "ranged"
+
+	local BlockUnitFolder = Instance.new("Folder", playerFolder)
+	BlockUnitFolder.Name = "blocks"
 end
 
 return StartGameService

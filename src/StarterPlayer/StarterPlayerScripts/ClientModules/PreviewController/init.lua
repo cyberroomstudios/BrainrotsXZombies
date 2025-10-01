@@ -183,12 +183,32 @@ function PreviewController:Start(unitType: string, unitName: string)
 	local smoothFactor = 0.4 -- movimento suave
 	local currentPosition = model:GetPivot().Position
 
+	-- Cria a parte de visualização
+	local previewPart = Instance.new("Part")
+	previewPart.Name = "PreviewArea"
+	previewPart.Anchored = true
+	previewPart.CanCollide = false
+	previewPart.Transparency = 0.7
+	previewPart.Color = Color3.fromRGB(0, 200, 255) -- azul claro
+	previewPart.Material = Enum.Material.Neon
+	previewPart.Parent = workspace
+
+	-- Defina aqui os offsets da área
+	local xOffset = 10 -- esquerda/direita
+	local zOffset = 15 -- frente/trás
+	local yHeight = 0.1 -- altura fixa
+	previewPart.Size = Vector3.new(xOffset * 2, yHeight, zOffset * 2)
+
 	self.previewConnection = RunService.RenderStepped:Connect(function()
 		local targetPos = getMousePosition()
 		if targetPos then
 			local snapped = snapToGridXZ(targetPos)
-			-- Movimento direto, sem Lerp, para “pular” entre células
-			model:PivotTo(CFrame.new(snapped) * CFrame.Angles(0, 0, 0))
+
+			-- Move o modelo
+			model:PivotTo(CFrame.new(snapped))
+
+			-- Alinha a parte da área no mesmo centro
+			previewPart.CFrame = CFrame.new(snapped + Vector3.new(0, yHeight / 2, 0))
 		end
 	end)
 end

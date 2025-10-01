@@ -9,7 +9,7 @@ local allocating = false
 
 function BaseService:Init() end
 
-function BaseService:Allocate(player: Player)
+function BaseService:Allocate2(player: Player)
 	if allocating then
 		return false
 	end
@@ -37,6 +37,24 @@ function BaseService:Allocate(player: Player)
 			break
 		end
 	end
+end
+
+function BaseService:Allocate(player: Player)
+	if allocating then
+		return false
+	end
+
+	allocating = true
+	-- Obtem todas as places
+	local place = workspace.map.baseLocations:FindFirstChild("1")
+
+	-- Inicializa os atributos da base
+	place:SetAttribute("BUSY", true)
+	place:SetAttribute("OWNER", player.UserId)
+
+	player:SetAttribute("BASE", place.Name)
+	player:SetAttribute("FLOOR", 1)
+	BaseService:MoveToBase(player, place.baseTemplate.PrimaryPart)
 end
 
 -- Leva o Jogador para o Spawn da Base

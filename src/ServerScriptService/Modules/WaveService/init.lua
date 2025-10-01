@@ -14,6 +14,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local EnemyService = require(ServerScriptService.Modules.EnemyService)
+local ThreadService = require(ServerScriptService.Modules.ThreadService)
 
 function WaveService:Init()
 	WaveService:InitBridgeListener()
@@ -33,6 +34,9 @@ function WaveService:StartWave(player: Player)
 	end
 
 	player:SetAttribute("GAME_ON", true)
+
+	-- Inicia a verificação dos Ranged
+	ThreadService:StartRanged(player)
 
 	task.spawn(function()
 		player:SetAttribute("BASE_LIFE", 100)
