@@ -153,18 +153,22 @@ function PreviewController:Start(unitType: string, unitName: string)
 		local x = math.floor(relative.X / gridSize.X + 0.5) * gridSize.X
 		local z = math.floor(relative.Z / gridSize.Z + 0.5) * gridSize.Z
 
-		-- Pega altura e centro do modelo
-		local modelSize = model:GetExtentsSize()
-		local modelPivot = model:GetPivot().Position
+		-- Bounding box do modelo
+		local bboxCFrame, bboxSize = model:GetBoundingBox()
+		local baseY = bboxCFrame.Position.Y - (bboxSize.Y / 2)
 
-		-- Base do modelo exatamente na grid origin
-		local y = 8.501
+		-- Chão alvo
+		local targetY = 8.501
+		local offsetY = targetY - baseY
 
-		-- Ajusta posição final
-		x = x + gridOrigin.X
-		z = z + gridOrigin.Z
+		-- Move o modelo inteiro
+		local newPivot = model:GetPivot()
+			+ Vector3.new(x + gridOrigin.X - bboxCFrame.Position.X, offsetY, z + gridOrigin.Z - bboxCFrame.Position.Z)
 
-		return Vector3.new(x, y, z)
+		model:PivotTo(newPivot)
+
+		-- Retorna só a posição final do pivot (se precisar usar depois)
+		return newPivot.Position
 	end
 
 	local startPos = getMousePosition()
