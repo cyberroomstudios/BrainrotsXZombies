@@ -188,16 +188,27 @@ function PreviewController:Start(unitType: string, unitName: string)
 	previewPart.Name = "PreviewArea"
 	previewPart.Anchored = true
 	previewPart.CanCollide = false
-	previewPart.Transparency = 0.7
-	previewPart.Color = Color3.fromRGB(0, 200, 255) -- azul claro
-	previewPart.Material = Enum.Material.Neon
+
+	previewPart.Transparency = 0
+	previewPart.Color = Color3.fromRGB(76, 0, 255) -- azul claro
+	previewPart.Material = Enum.Material.ForceField
+	previewPart.Shape = Enum.PartType.Cylinder
 	previewPart.Parent = workspace
 
 	-- Defina aqui os offsets da área
 	local xOffset = 10 -- esquerda/direita
 	local zOffset = 15 -- frente/trás
 	local yHeight = 0.1 -- altura fixa
-	previewPart.Size = Vector3.new(xOffset * 2, yHeight, zOffset * 2)
+
+	local radius = 15
+	local thickness = 0.1
+
+	-- No Roblox, Cylinder é deitado no eixo X por padrão
+	previewPart.Size = Vector3.new(thickness, radius * 2, radius * 2)
+
+	-- Rotaciona para ficar deitado no chão
+	previewPart.CFrame = CFrame.new(Vector3.new(0, 0, 0)) * CFrame.Angles(0, 0, math.rad(90))
+	local horizontalCFrameRotation = CFrame.Angles(0, 0, math.rad(90))
 
 	self.previewConnection = RunService.RenderStepped:Connect(function()
 		local targetPos = getMousePosition()
@@ -208,7 +219,7 @@ function PreviewController:Start(unitType: string, unitName: string)
 			model:PivotTo(CFrame.new(snapped))
 
 			-- Alinha a parte da área no mesmo centro
-			previewPart.CFrame = CFrame.new(snapped + Vector3.new(0, yHeight / 2, 0))
+			previewPart.CFrame = CFrame.new(snapped + Vector3.new(0, 0, 0)) * horizontalCFrameRotation
 		end
 	end)
 end

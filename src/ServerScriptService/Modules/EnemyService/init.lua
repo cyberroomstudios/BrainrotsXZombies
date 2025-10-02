@@ -16,6 +16,10 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- End Bridg Net
 
 local ENEMY_STOP_DISTANCE = 0
+local WALK_ANIMATION = "99851409784960"
+
+local animationAttackTrack = {}
+local animationWalkTrack = {}
 
 function EnemyService:Init() end
 
@@ -47,11 +51,25 @@ function EnemyService:SpawnEnemy(player: Player, currentWave: number)
 	end
 end
 
+function EnemyService:CreateWalkAnimation(enemy: Model)
+	local humanoid: Humanoid = enemy:FindFirstChildOfClass("Humanoid")
+	local animator: Animator = humanoid:FindFirstChildOfClass("Animator")
+
+	local attackAnimationTrack = animator:LoadAnimation(ReplicatedStorage.animations.zombie.attack)
+	animationAttackTrack[enemy] = attackAnimationTrack
+
+	local walkAnimationtrack = animator:LoadAnimation(ReplicatedStorage.animations.zombie.walk)
+	animationWalkTrack[enemy] = walkAnimationtrack
+	animationWalkTrack[enemy]:Play()
+end
+
 function EnemyService:Create(player: Player, enemySpawn: Part)
 	task.spawn(function()
 		-- Criando um novo Enemy
 		local newEnemy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
+
 		local newEnemyHumanoidRootPart = newEnemy:WaitForChild("HumanoidRootPart")
+
 		newEnemy:SetAttribute("IS_ENEMY", true)
 		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
 		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
@@ -65,7 +83,10 @@ function EnemyService:Create(player: Player, enemySpawn: Part)
 		EnemyService:CreateOnDiedListener(player, newEnemy)
 
 		-- Cria a thread para ficar atacando
-		EnemyService:StartAttackThread(player, newEnemy, newEnemyHumanoidRootPart)
+		EnemyService:StartAttackThread(player, newEnemy)
+
+		-- Cria a Animação
+		EnemyService:CreateWalkAnimation(newEnemy)
 
 		-- Colocando o Enemy para procurar o Objetivo
 		EnemyService:MoveToTarget(newEnemy, enemyTarget, newEnemyHumanoidRootPart)
@@ -76,14 +97,78 @@ function EnemyService:GetCollidingParts(hrp: BasePart)
 	return hrp:GetTouchingParts()
 end
 
-function EnemyService:StartAttackThread(player: Player, enemy: Model, hrp: BasePart)
-	task.spawn(function()
-		while enemy.Parent do
-			local collidingParts = EnemyService:GetCollidingParts(hrp)
+function EnemyService:StartAttackThread(player: Player, enemy)
+	-- STARTA A ANIMAÇÃO DE ATAQUE
+	local function playAttackAnimation()
+		local attackAnimationTrack = animationAttackTrack[enemy]
+		if attackAnimationTrack and not attackAnimationTrack.IsPlaying then
+			attackAnimationTrack:Play()
+		end
+	end
 
-			for _, part in collidingParts do
-				if part:GetAttribute("IS_HEART") then
-					EnemyService:HitHeart(player, part)
+	-- CRIA A LISTA DE ITENS QUE O INIMIGO PODE ATACAR
+	local function createAttackableItems()
+		local base = BaseService:GetBase(player)
+
+		local blocksFolder = workspace.runtime[player.UserId].blocks:GetDescendants()
+		local rangedFolder = workspace.runtime[player.UserId].ranged:GetDescendants()
+		local heartBase = base.baseTemplate.Heart.HitBox
+
+		local allChildren = {}
+
+		for _, obj in ipairs(blocksFolder) do
+			if obj:GetAttribute("IS_UNIT") then
+				table.insert(allChildren, obj)
+			end
+		end
+
+		for _, obj in ipairs(rangedFolder) do
+			if obj:GetAttribute("IS_UNIT") then
+				table.insert(allChildren, obj)
+			end
+		end
+
+		table.insert(allChildren, heartBase)
+
+		return allChildren
+	end
+
+	-- OBTEM O BRAÇO ESQUERDO DO INIMIGO, QUE SERÁ UTILIZADO PRA DAR DANDO
+	local function getLeftArm()
+		local leftArm = enemy:FindFirstChild("Left Arm")
+		while not leftArm do
+			print("Procurando")
+			leftArm = enemy:FindFirstChild("Left Arm")
+			task.wait(0.1)
+		end
+		return leftArm
+	end
+
+	task.spawn(function()
+		local leftArm = getLeftArm()
+		local attackableItems = createAttackableItems()
+
+		local attackHandlers = {
+			IS_HEART = function(player, part)
+				EnemyService:HitHeart(player, part)
+			end,
+			IS_UNIT = function(player, part)
+				EnemyService:HitUnit(player, part)
+			end,
+		}
+
+		while enemy.Parent do
+			for _, part in attackableItems do
+				for attr, handler in attackHandlers do
+					if part:GetAttribute(attr) then
+						local leftArmPos = leftArm.Position
+						local partPos = part.Position
+						if (partPos - leftArmPos).Magnitude <= 4 then
+							playAttackAnimation()
+							handler(player, part)
+						end
+						break
+					end
 				end
 			end
 			task.wait(1)
@@ -102,6 +187,37 @@ function EnemyService:HitHeart(player: Player, heartPart: Part)
 
 	if currentLife == 0 then
 		EnemyService:KillPlayer(player)
+	end
+end
+
+function EnemyService:HitUnit(player: Player, part: Part)
+	local mainModel = part.Parent
+	if mainModel then
+		local allChildren = mainModel:GetDescendants()
+
+		local currentLife = mainModel:GetAttribute("LIFE") or 100
+		currentLife = currentLife - 10
+		mainModel:SetAttribute("LIFE", currentLife)
+
+		local darkeningSteps = {
+			[90] = 0.25, -- escurece 25%
+			[60] = 0.5, -- escurece 50%
+			[30] = 0.75, -- escurece 75%
+		}
+
+		for _, child in allChildren do
+			if child:IsA("Part") then
+				local factor = darkeningSteps[currentLife]
+				if factor then
+					child.Color = child.Color:Lerp(Color3.new(0, 0, 0), factor)
+				end
+
+				if currentLife == 0 then
+					mainModel:Destroy()
+				end
+			end
+		end
+		print("Atacando!")
 	end
 end
 
@@ -127,6 +243,8 @@ function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)
 			humanoid.Parent:Destroy()
 			task.wait(1)
 			EnemyService:ReportNewDied(player)
+			animationWalkTrack[enemy] = nil
+			animationAttackTrack[enemy] = nil
 		end)
 	end)
 end
@@ -197,6 +315,11 @@ function EnemyService:MoveToTarget(enemy: Model, enemyTarget: Part, newEnemyHuma
 	while (newEnemyHumanoidRootPart.Position - targetPosition).Magnitude > 1 do
 		enemy.Humanoid:MoveTo(targetPosition)
 		enemy.Humanoid.MoveToFinished:Wait()
+	end
+
+	local walkAnimation = animationWalkTrack[enemyTarget]
+	if walkAnimation then
+		walkAnimation:Stop()
 	end
 end
 

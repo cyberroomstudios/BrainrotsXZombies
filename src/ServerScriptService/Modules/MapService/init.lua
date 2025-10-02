@@ -64,6 +64,7 @@ function MapService:SetItemOnMap(player: Player, unitType: string, unitName: str
 		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
 		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
 
+		
 		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)))
 
 		item.Parent = workspace.runtime[player.UserId][unitType]
