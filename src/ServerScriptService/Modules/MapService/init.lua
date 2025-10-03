@@ -64,7 +64,6 @@ function MapService:SetItemOnMap(player: Player, unitType: string, unitName: str
 		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
 		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
 
-		
 		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)))
 
 		item.Parent = workspace.runtime[player.UserId][unitType]
@@ -82,5 +81,21 @@ function MapService:InitMapFromPlayer(player: Player)
 
 		MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot)
 	end
+end
+
+function MapService:RestartBaseMap(player: Player)
+	local blocks = workspace.runtime[player.UserId]["blocks"]:GetChildren()
+
+	for _, block in blocks do
+		block:Destroy()
+	end
+
+	local blocks = workspace.runtime[player.UserId]["ranged"]:GetChildren()
+
+	for _, block in blocks do
+		block:Destroy()
+	end
+
+	MapService:InitMapFromPlayer(player)
 end
 return MapService

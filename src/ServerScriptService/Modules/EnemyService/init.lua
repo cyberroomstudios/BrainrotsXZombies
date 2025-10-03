@@ -9,6 +9,7 @@ local UtilService = require(ServerScriptService.Modules.UtilService)
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local MapService = require(ServerScriptService.Modules.MapService)
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -233,6 +234,8 @@ function EnemyService:KillPlayer(player: Player)
 	bridge:Fire(player, {
 		[actionIdentifier] = "ShowYouDiedScreen",
 	})
+
+	MapService:RestartBaseMap(player)
 end
 
 function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)

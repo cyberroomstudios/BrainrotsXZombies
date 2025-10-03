@@ -40,6 +40,11 @@ function HudController:CreateReferences()
 end
 
 function HudController:InitButtonListerns()
+	storeButton.MouseButton1Click:Connect(function()
+		print("Click")
+		TeleportController:ToBaseStore()
+	end)
+
 	baseButton.MouseButton1Click:Connect(function()
 		TeleportController:ToBase()
 	end)

@@ -8,6 +8,7 @@ local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local MapService = require(ServerScriptService.Modules.MapService)
+local UtilService = require(ServerScriptService.Modules.UtilService)
 local bridge = BridgeNet2.ReferenceBridge("StartGameService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -40,6 +41,8 @@ function StartGameService:InitBridgeListener()
 			BaseService:Allocate(player)
 
 			MapService:InitMapFromPlayer(player)
+
+			StartGameService:CreatePlayerAttributes(player)
 		end
 	end
 end
@@ -56,6 +59,25 @@ function StartGameService:CreatePlayerFolder(player: Player)
 
 	local BlockUnitFolder = Instance.new("Folder", playerFolder)
 	BlockUnitFolder.Name = "blocks"
+end
+
+function StartGameService:CreatePlayerAttributes(player: Player)
+	local function getBaseStoreSpawn()
+		local spawn = UtilService:WaitForDescendants(workspace, "map", "stores", "base", "Spawn")
+
+		if not spawn then
+			warn("[ERROR] Base Store Spawn not found! ")
+			return
+		end
+
+		return spawn
+	end
+
+	local baseSpawn = getBaseStoreSpawn()
+
+	if baseSpawn then
+		player:SetAttribute("SPAWN_BASE_STORE_CFRAME", baseSpawn.CFrame)
+	end
 end
 
 return StartGameService

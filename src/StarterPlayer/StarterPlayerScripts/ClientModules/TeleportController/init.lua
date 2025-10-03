@@ -15,4 +15,14 @@ function TeleportController:ToBase()
 	end
 end
 
+function TeleportController:ToBaseStore()
+	local spawnCFrame = player:GetAttribute("SPAWN_BASE_STORE_CFRAME")
+
+	local character = player.Character
+
+	if spawnCFrame and character and character:FindFirstChild("HumanoidRootPart") then
+		character.HumanoidRootPart.CFrame = spawnCFrame
+	end
+end
+
 return TeleportController
