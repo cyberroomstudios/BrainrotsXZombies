@@ -98,10 +98,10 @@ end
 function PreviewController:GetItemFromTypeAndName(unitType: string, unitName: string)
 	local unitsFolder = ReplicatedStorage.developer.units
 	local items = {
-		["blocks"] = unitsFolder.blocks,
-		["melee"] = unitsFolder.melee,
-		["ranged"] = unitsFolder.ranged,
-		["trap"] = unitsFolder.trap,
+		["BLOCK"] = unitsFolder.blocks,
+		["MELEE"] = unitsFolder.melee,
+		["RANGED"] = unitsFolder.ranged,
+		["TRAP"] = unitsFolder.trap,
 	}
 
 	if items[unitType] then

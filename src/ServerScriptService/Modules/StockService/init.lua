@@ -3,6 +3,7 @@ local StockService = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 -- Init Bridg Net
+local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
@@ -14,6 +15,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 
 local unitsRarity = require(ReplicatedStorage.Enums.unitsRarity)
 local blocks = require(ReplicatedStorage.Enums.blocks)
+local UnitService = require(ServerScriptService.Modules.UnitService)
 
 local TIME_TO_RELOAD_STOCK = 60 * 5
 
@@ -25,10 +27,36 @@ function StockService:Init()
 	StockService:InitStockCounter()
 end
 
+function StockService:InitBlocks()
+	local orderedRaritys = table.clone(unitsRarity)
+	table.sort(orderedRaritys, function(a, b)
+		return a.GUI.Order < b.GUI.Order
+	end)
+
+
+	for index, rarity in orderedRaritys do
+		local blocks = table.clone(StockService:GetStockFromRarity(index))
+		table.sort(blocks, function(a, b)
+			return a.GUI.Order < b.GUI.Order
+		end)
+
+		for blockIndex, value in blocks do
+			blocksGlobalStock[value.Name] = 0
+		end
+		
+	end
+end
+
 function StockService:InitBridgeListener()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "GetStock" then
 			return StockService:GetStock(player)
+		end
+
+		if data[actionIdentifier] == "BuyItem" then
+			local item = data.data.Item
+			print(item)
+			UnitService:Give(player, item.Name, item.Type)
 		end
 	end
 end
@@ -38,7 +66,9 @@ function StockService:GetStock(player: Player)
 		blockPlayerStock[player] = blocksGlobalStock
 	end
 
-	return blockPlayerStock[player]
+	return {
+		Blocks = blockPlayerStock[player]
+	}
 end
 function StockService:InitStockCounter()
 	currentTimeToReload = TIME_TO_RELOAD_STOCK
@@ -56,9 +86,8 @@ function StockService:InitStockCounter()
 	end)
 end
 
-function StockService:CreateBlockStock()
-	local function getFromRarity(rarityName: string)
-		local selectedItems = {}
+function StockService:GetStockFromRarity(rarityName: string)
+	local selectedItems = {}
 		for _, block in blocks do
 			if block.Rarity == rarityName then
 				table.insert(selectedItems, block)
@@ -70,10 +99,14 @@ function StockService:CreateBlockStock()
 		end)
 
 		return selectedItems
-	end
+end
 
+function StockService:CreateBlockStock()
+	StockService:InitBlocks()
+	
 	local raffledRarities = {}
 
+	
 	-- Pega todas as categorias e vê quais vão ser sorteadas
 	for index, rarity in unitsRarity do
 		local odd = rarity.Odd
@@ -86,7 +119,7 @@ function StockService:CreateBlockStock()
 
 	local raffledBlocks = {}
 	for index, rarity in raffledRarities do
-		local blocksFromRarity = getFromRarity(rarity)
+		local blocksFromRarity = StockService:GetStockFromRarity(rarity)
 
 		local added = false
 		for _, block in blocksFromRarity do
@@ -104,8 +137,6 @@ function StockService:CreateBlockStock()
 			table.insert(raffledBlocks, blocksFromRarity[1])
 		end
 	end
-
-	blocksGlobalStock = {}
 
 	for index, block in raffledBlocks do
 		blocksGlobalStock[block.Name] = math.random(block.Stock.Min, block.Stock.Max)

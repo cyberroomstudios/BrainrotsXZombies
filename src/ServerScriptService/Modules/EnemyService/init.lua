@@ -111,8 +111,8 @@ function EnemyService:StartAttackThread(player: Player, enemy)
 	local function createAttackableItems()
 		local base = BaseService:GetBase(player)
 
-		local blocksFolder = workspace.runtime[player.UserId].blocks:GetDescendants()
-		local rangedFolder = workspace.runtime[player.UserId].ranged:GetDescendants()
+		local blocksFolder = workspace.runtime[player.UserId].BLOCK:GetDescendants()
+		local rangedFolder = workspace.runtime[player.UserId].RANGED:GetDescendants()
 		local heartBase = base.baseTemplate.Heart.HitBox
 
 		local allChildren = {}

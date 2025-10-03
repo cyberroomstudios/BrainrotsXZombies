@@ -30,10 +30,10 @@ end
 function MapService:GetItemFromTypeAndName(unitType: string, unitName: string)
 	local unitsFolder = ReplicatedStorage.developer.units
 	local items = {
-		["blocks"] = unitsFolder.blocks,
-		["melee"] = unitsFolder.melee,
-		["ranged"] = unitsFolder.ranged,
-		["trap"] = unitsFolder.trap,
+		["BLOCK"] = unitsFolder.blocks,
+		["MELEE"] = unitsFolder.melee,
+		["RANGED"] = unitsFolder.ranged,
+		["TRAP"] = unitsFolder.trap,
 	}
 
 	if items[unitType] then
@@ -84,13 +84,13 @@ function MapService:InitMapFromPlayer(player: Player)
 end
 
 function MapService:RestartBaseMap(player: Player)
-	local blocks = workspace.runtime[player.UserId]["blocks"]:GetChildren()
+	local blocks = workspace.runtime[player.UserId]["BLOCK"]:GetChildren()
 
 	for _, block in blocks do
 		block:Destroy()
 	end
 
-	local blocks = workspace.runtime[player.UserId]["ranged"]:GetChildren()
+	local blocks = workspace.runtime[player.UserId]["RANGED"]:GetChildren()
 
 	for _, block in blocks do
 		block:Destroy()

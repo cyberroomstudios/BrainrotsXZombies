@@ -12,8 +12,16 @@ return {
 
 		{
 			Type = "string",
+			Name = "type",
+			Description = "Unit Type",
+		},
+
+		{
+			Type = "string",
 			Name = "unit",
 			Description = "Unit Name",
 		},
+
+		
 	},
 }

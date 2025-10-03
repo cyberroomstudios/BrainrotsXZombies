@@ -2,15 +2,16 @@
 
 local Blocks = table.freeze({
 
-	{
+	["blue"] = {
 		Name = "blue",
 		Life = 100,
-		Price = 100,
+		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		GUI = {
-			name = "",
-			description = "",
+			Name = "Blue Block",
+			Description = "Defend Your Base With 100 XP",
+			Order = 1,
 		},
 		Stock = {
 			Min = 1,
@@ -18,15 +19,16 @@ local Blocks = table.freeze({
 		},
 	},
 
-	{
+	["orange"] = {
 		Name = "orange",
 		Life = 100,
-		Price = 100,
+		Price = 1500,
 		Rarity = "COMMON",
 		Odd = 0.1,
 		GUI = {
-			name = "",
-			description = "",
+			Name = "Orange Block",
+			Description = "Defend Your Base With 200 XP",
+			Order = 2,
 		},
 		Stock = {
 			Min = 1,
@@ -34,15 +36,16 @@ local Blocks = table.freeze({
 		},
 	},
 
-	{
+	["yellow"] = {
 		Name = "yellow",
 		Life = 100,
-		Price = 100,
+		Price = 10000,
 		Rarity = "UNCOMMON",
 		Odd = 1,
 		GUI = {
-			name = "",
-			description = "",
+			Name = "Yellow Block",
+			Description = "Defend Your Base With 300 XP",
+			Order = 3,
 		},
 		Stock = {
 			Min = 1,

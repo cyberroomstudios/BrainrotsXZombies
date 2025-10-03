@@ -3,12 +3,12 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
-local units = require(ReplicatedStorage.Enums.units)
 
 -- Init Bridg Net
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local blocks = require(ReplicatedStorage.Enums.blocks)
 local bridge = BridgeNet2.ReferenceBridge("UnitService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -27,16 +27,25 @@ function UnitService:InitBridgeListener()
 	end
 end
 
-function UnitService:Give(player: Player, unitName: string)
-	if not units[unitName] then
-		warn("Unit not found:" .. unitName)
+function UnitService:Give(player: Player, unitName: string, unitType: string)
+	local unitTypesMap = {
+		["BLOCK"] = blocks,
+	}
+
+	if not unitTypesMap[unitType] then
+		warn("[ERROR] Unit Type Map not found")
+		return
+	end
+
+	if not unitTypesMap[unitType] then
+		warn(" [ERROR] Unit not found:" .. unitName)
 		return
 	end
 
 	PlayerDataHandler:Update(player, "unitsBackpack", function(current)
 		local data = {
 			UnitName = unitName,
-			UnitType = units[unitName].Type,
+			UnitType = unitType,
 			Amount = 1,
 		}
 
@@ -53,9 +62,18 @@ function UnitService:Give(player: Player, unitName: string)
 	end)
 end
 
-function UnitService:Consome(player: Player, unitName: string)
-	if not units[unitName] then
-		warn("Unit not found: " .. unitName)
+function UnitService:Consome(player: Player, unitName: string, unitType: string)
+	local unitTypesMap = {
+		["BLOCK"] = blocks,
+	}
+
+	if not unitTypesMap[unitType] then
+		warn("[ERROR] Unit Type Map not found")
+		return
+	end
+
+	if not unitTypesMap[unitType] then
+		warn(" [ERROR] Unit not found:" .. unitName)
 		return
 	end
 

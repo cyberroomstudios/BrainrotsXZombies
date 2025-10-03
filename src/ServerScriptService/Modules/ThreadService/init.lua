@@ -110,7 +110,7 @@ function ThreadService:StartRanged(player: Player)
 
 	task.spawn(function()
 		while player:GetAttribute("GAME_ON") do
-			local items = workspace.runtime[player.UserId]["ranged"]:GetChildren()
+			local items = workspace.runtime[player.UserId]["RANGED"]:GetChildren()
 
 			for _, model in ipairs(items) do
 				if model:IsA("Model") then
