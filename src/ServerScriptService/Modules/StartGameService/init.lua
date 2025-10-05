@@ -59,6 +59,9 @@ function StartGameService:CreatePlayerFolder(player: Player)
 
 	local BlockUnitFolder = Instance.new("Folder", playerFolder)
 	BlockUnitFolder.Name = "BLOCK"
+
+	local meleeUnitFolder = Instance.new("Folder", playerFolder)
+	meleeUnitFolder.Name = "MELEE"
 end
 
 function StartGameService:CreatePlayerAttributes(player: Player)

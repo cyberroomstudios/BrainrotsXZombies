@@ -1,174 +1,163 @@
 local EnemyService = {}
+
 local ServerScriptService = game:GetService("ServerScriptService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ContentProvider = game:GetService("ContentProvider")
 
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
-
--- Init Bridg Net
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Utility = ReplicatedStorage.Utility
-local BridgeNet2 = require(Utility.BridgeNet2)
 local MapService = require(ServerScriptService.Modules.MapService)
+
+local Utility = ReplicatedStorage:WaitForChild("Utility")
+local BridgeNet2 = require(Utility.BridgeNet2)
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
-local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
-local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
--- End Bridg Net
 
 local ENEMY_STOP_DISTANCE = 0
-local WALK_ANIMATION = "99851409784960"
-
 local animationAttackTrack = {}
 local animationWalkTrack = {}
 
-function EnemyService:Init() end
+function EnemyService:Init()
+	task.spawn(function()
+		EnemyService:Warmup()
+		local preloadStart = os.clock()
+
+		local zombie = ReplicatedStorage:WaitForChild("Model"):WaitForChild("Enemy"):WaitForChild("Zombie")
+		local animations = ReplicatedStorage:WaitForChild("animations"):WaitForChild("zombie")
+
+		-- Pré-carrega o modelo e animações
+		ContentProvider:PreloadAsync({
+			zombie,
+			animations.attack,
+			animations.walk,
+		})
+
+		print(string.format("[EnemyService] Assets pré-carregados em %.3fs", os.clock() - preloadStart))
+	end)
+end
+
+function EnemyService:Warmup()
+	task.spawn(function()
+		local dummy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
+		dummy.Parent = workspace.TemporaryCache
+		dummy:PivotTo(CFrame.new(0, -100, 0)) -- fora da tela
+		local hum = dummy:WaitForChild("Humanoid")
+		local animator = hum:WaitForChild("Animator")
+		animator:LoadAnimation(ReplicatedStorage.animations.zombie.walk):Play()
+		task.wait(2)
+		dummy:Destroy()
+	end)
+end
 
 function EnemyService:SpawnEnemy(player: Player, currentWave: number)
 	local base = BaseService:GetBase(player)
+	if not base then
+		return
+	end
+
 	local enemyFolder = UtilService:WaitForDescendants(base, "baseTemplate", "enemy")
-	local enemySpawns = {}
-
-	for _, value in enemyFolder:GetChildren() do
-		table.insert(enemySpawns, value)
+	local enemySpawns = enemyFolder:GetChildren()
+	if #enemySpawns == 0 then
+		return
 	end
 
-	local oldSpawn = nil
-	if base then
-		for i = 1, currentWave do
-			task.spawn(function()
-				local enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
+	local oldSpawn
 
-				while oldSpawn and enemySpawn == oldSpawn do
-					enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
-					task.wait()
-				end
-				oldSpawn = enemySpawn
-
-				EnemyService:Create(player, enemySpawn)
-			end)
-			task.wait(0.2)
-		end
+	for i = 1, currentWave do
+		task.spawn(function()
+			local enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
+			while oldSpawn and enemySpawn == oldSpawn do
+				print("Procurando")
+				enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
+				task.wait(1)
+			end
+			oldSpawn = enemySpawn
+			EnemyService:Create(player, enemySpawn)
+		end)
 	end
+end
+
+function EnemyService:Create(player: Player, enemySpawn: Part)
+	task.spawn(function()
+		local createStart = os.clock()
+		local newEnemy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
+		local hrp = newEnemy:WaitForChild("HumanoidRootPart")
+		local humanoid = newEnemy:WaitForChild("Humanoid")
+
+		newEnemy:SetAttribute("IS_ENEMY", true)
+		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
+		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
+
+		-- Define o Network Owner (somente se o player existir)
+		pcall(function()
+			hrp:SetNetworkOwner(player)
+		end)
+
+		EnemyService:CreateWalkAnimation(newEnemy)
+		EnemyService:CreateOnDiedListener(player, newEnemy)
+
+		task.defer(function()
+			local target = EnemyService:GetEnemyTarget(player)
+			if target then
+				EnemyService:MoveToTarget(newEnemy, target, hrp)
+				EnemyService:StartAttackThread(player, newEnemy)
+			end
+		end)
+
+		print(string.format("[EnemyService] Enemy criado em %.3fs", os.clock() - createStart))
+	end)
 end
 
 function EnemyService:CreateWalkAnimation(enemy: Model)
 	local humanoid: Humanoid = enemy:FindFirstChildOfClass("Humanoid")
 	local animator: Animator = humanoid:FindFirstChildOfClass("Animator")
 
-	local attackAnimationTrack = animator:LoadAnimation(ReplicatedStorage.animations.zombie.attack)
-	animationAttackTrack[enemy] = attackAnimationTrack
+	local attack = animator:LoadAnimation(ReplicatedStorage.animations.zombie.attack)
+	local walk = animator:LoadAnimation(ReplicatedStorage.animations.zombie.walk)
 
-	local walkAnimationtrack = animator:LoadAnimation(ReplicatedStorage.animations.zombie.walk)
-	animationWalkTrack[enemy] = walkAnimationtrack
-	animationWalkTrack[enemy]:Play()
+	animationAttackTrack[enemy] = attack
+	animationWalkTrack[enemy] = walk
+	walk:Play()
 end
 
-function EnemyService:Create(player: Player, enemySpawn: Part)
+function EnemyService:StartAttackThread(player: Player, enemy: Model)
 	task.spawn(function()
-		-- Criando um novo Enemy
-		local newEnemy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
+		local leftArm = enemy:WaitForChild("Left Arm")
+		local attack = animationAttackTrack[enemy]
 
-		local newEnemyHumanoidRootPart = newEnemy:WaitForChild("HumanoidRootPart")
-
-		newEnemy:SetAttribute("IS_ENEMY", true)
-		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
-		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
-		newEnemyHumanoidRootPart:SetNetworkOwner(player)
-
-		-- Cria o objetivo do enemy
-		local enemyTarget = EnemyService:GetEnemyTargert(player)
-		task.wait(0.5)
-
-		-- Cria o evento de ouvir quando o enemy morre
-		EnemyService:CreateOnDiedListener(player, newEnemy)
-
-		-- Cria a thread para ficar atacando
-		EnemyService:StartAttackThread(player, newEnemy)
-
-		-- Cria a Animação
-		EnemyService:CreateWalkAnimation(newEnemy)
-
-		-- Colocando o Enemy para procurar o Objetivo
-		EnemyService:MoveToTarget(newEnemy, enemyTarget, newEnemyHumanoidRootPart)
-	end)
-end
-
-function EnemyService:GetCollidingParts(hrp: BasePart)
-	return hrp:GetTouchingParts()
-end
-
-function EnemyService:StartAttackThread(player: Player, enemy)
-	-- STARTA A ANIMAÇÃO DE ATAQUE
-	local function playAttackAnimation()
-		local attackAnimationTrack = animationAttackTrack[enemy]
-		if attackAnimationTrack and not attackAnimationTrack.IsPlaying then
-			attackAnimationTrack:Play()
-		end
-	end
-
-	-- CRIA A LISTA DE ITENS QUE O INIMIGO PODE ATACAR
-	local function createAttackableItems()
 		local base = BaseService:GetBase(player)
+		local heart = base.baseTemplate.Heart.HitBox
+		local blocks = workspace.runtime[player.UserId].BLOCK:GetDescendants()
+		local ranged = workspace.runtime[player.UserId].RANGED:GetDescendants()
 
-		local blocksFolder = workspace.runtime[player.UserId].BLOCK:GetDescendants()
-		local rangedFolder = workspace.runtime[player.UserId].RANGED:GetDescendants()
-		local heartBase = base.baseTemplate.Heart.HitBox
-
-		local allChildren = {}
-
-		for _, obj in ipairs(blocksFolder) do
+		local attackable = {}
+		for _, obj in ipairs(blocks) do
 			if obj:GetAttribute("IS_UNIT") then
-				table.insert(allChildren, obj)
+				table.insert(attackable, obj)
 			end
 		end
-
-		for _, obj in ipairs(rangedFolder) do
+		for _, obj in ipairs(ranged) do
 			if obj:GetAttribute("IS_UNIT") then
-				table.insert(allChildren, obj)
+				table.insert(attackable, obj)
 			end
 		end
-
-		table.insert(allChildren, heartBase)
-
-		return allChildren
-	end
-
-	-- OBTEM O BRAÇO ESQUERDO DO INIMIGO, QUE SERÁ UTILIZADO PRA DAR DANDO
-	local function getLeftArm()
-		local leftArm = enemy:FindFirstChild("Left Arm")
-		while not leftArm do
-			print("Procurando")
-			leftArm = enemy:FindFirstChild("Left Arm")
-			task.wait(0.1)
-		end
-		return leftArm
-	end
-
-	task.spawn(function()
-		local leftArm = getLeftArm()
-		local attackableItems = createAttackableItems()
-
-		local attackHandlers = {
-			IS_HEART = function(player, part)
-				EnemyService:HitHeart(player, part)
-			end,
-			IS_UNIT = function(player, part)
-				EnemyService:HitUnit(player, part)
-			end,
-		}
+		table.insert(attackable, heart)
 
 		while enemy.Parent do
-			for _, part in attackableItems do
-				for attr, handler in attackHandlers do
-					if part:GetAttribute(attr) then
-						local leftArmPos = leftArm.Position
-						local partPos = part.Position
-						if (partPos - leftArmPos).Magnitude <= 4 then
-							playAttackAnimation()
-							handler(player, part)
-						end
-						break
+			for _, part in attackable do
+				if not part.Parent then
+					continue
+				end
+				local dist = (leftArm.Position - part.Position).Magnitude
+				if dist <= 4 then
+					if attack and not attack.IsPlaying then
+						attack:Play()
+					end
+
+					if part:GetAttribute("IS_UNIT") then
+						EnemyService:HitUnit(player, part)
+					elseif part:GetAttribute("IS_HEART") then
+						EnemyService:HitHeart(player, part)
 					end
 				end
 			end
@@ -178,155 +167,130 @@ function EnemyService:StartAttackThread(player: Player, enemy)
 end
 
 function EnemyService:HitHeart(player: Player, heartPart: Part)
-	local currentLife = player:GetAttribute("BASE_LIFE") or 100
-	currentLife = currentLife - 10
-
-	if currentLife < 0 then
-		currentLife = 0
-	end
-	player:SetAttribute("BASE_LIFE", currentLife)
-
-	if currentLife == 0 then
+	local life = player:GetAttribute("BASE_LIFE") or 100
+	life = math.max(life - 10, 0)
+	player:SetAttribute("BASE_LIFE", life)
+	if life == 0 then
 		EnemyService:KillPlayer(player)
 	end
 end
 
 function EnemyService:HitUnit(player: Player, part: Part)
-	local mainModel = part.Parent
-	if mainModel then
-		local allChildren = mainModel:GetDescendants()
+	local model = part.Parent
+	if not model then
+		return
+	end
 
-		local currentLife = mainModel:GetAttribute("LIFE") or 100
-		currentLife = currentLife - 10
-		mainModel:SetAttribute("LIFE", currentLife)
+	local life = (model:GetAttribute("LIFE") or 100) - 10
+	model:SetAttribute("LIFE", life)
 
-		local darkeningSteps = {
-			[90] = 0.25, -- escurece 25%
-			[60] = 0.5, -- escurece 50%
-			[30] = 0.75, -- escurece 75%
-		}
-
-		for _, child in allChildren do
-			if child:IsA("Part") then
-				local factor = darkeningSteps[currentLife]
-				if factor then
+	if life <= 0 then
+		model:Destroy()
+	else
+		local factor
+		if life <= 30 then
+			factor = 0.75
+		elseif life <= 60 then
+			factor = 0.5
+		elseif life <= 90 then
+			factor = 0.25
+		end
+		if factor then
+			for _, child in ipairs(model:GetDescendants()) do
+				if child:IsA("BasePart") then
 					child.Color = child.Color:Lerp(Color3.new(0, 0, 0), factor)
-				end
-
-				if currentLife == 0 then
-					mainModel:Destroy()
 				end
 			end
 		end
-		print("Atacando!")
+	end
+end
+
+function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)
+	local humanoid = enemy:WaitForChild("Humanoid")
+	humanoid.Died:Connect(function()
+		task.spawn(function()
+			EnemyService:MakeRagdoll(enemy)
+			task.wait(2)
+
+			if enemy and enemy.Parent then
+				enemy:Destroy()
+			end
+
+			animationWalkTrack[enemy] = nil
+			animationAttackTrack[enemy] = nil
+
+			task.wait(0.5)
+			EnemyService:ReportNewDied(player)
+		end)
+	end)
+end
+
+function EnemyService:ReportNewDied(player: Player)
+	local enemiesFolder = workspace.runtime[player.UserId].Enemys
+	if #enemiesFolder:GetChildren() == 0 then
+		local wave = (player:GetAttribute("CURRENT_WAVE") or 1) + 1
+		player:SetAttribute("CURRENT_WAVE", wave)
+		EnemyService:SpawnEnemy(player, wave)
 	end
 end
 
 function EnemyService:KillPlayer(player: Player)
 	player:SetAttribute("GAME_ON", false)
 	player:SetAttribute("CURRENT_WAVE", 1)
-	local enemysFolder = workspace.runtime[player.UserId].Enemys
 
-	for _, value in enemysFolder:GetChildren() do
-		value:Destroy()
+	for _, enemy in ipairs(workspace.runtime[player.UserId].Enemys:GetChildren()) do
+		enemy:Destroy()
 	end
 
-	bridge:Fire(player, {
-		[actionIdentifier] = "ShowYouDiedScreen",
-	})
-
+	bridge:Fire(player, { [actionIdentifier] = "ShowYouDiedScreen" })
 	MapService:RestartBaseMap(player)
 end
 
-function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)
-	local humanoid = enemy.Humanoid
-	humanoid.Died:Connect(function()
-		EnemyService:MakeRagdoll(enemy)
-		task.delay(2, function()
-			humanoid.Parent:Destroy()
-			task.wait(1)
-			EnemyService:ReportNewDied(player)
-			animationWalkTrack[enemy] = nil
-			animationAttackTrack[enemy] = nil
-		end)
-	end)
-end
-
-function EnemyService:ReportNewDied(player: Player)
-	local enemysFolder = workspace.runtime[player.UserId].Enemys
-	local hasEnemy = false
-
-	for _, value in enemysFolder:GetChildren() do
-		hasEnemy = true
-	end
-
-	if not hasEnemy then
-		local currentWave = player:GetAttribute("CURRENT_WAVE") or 1
-		currentWave = currentWave + 1
-
-		player:SetAttribute("CURRENT_WAVE", currentWave)
-		EnemyService:SpawnEnemy(player, currentWave)
-	end
-end
-
-function EnemyService:MakeRagdoll(character)
-	local humanoid = character:FindFirstChildOfClass("Humanoid")
+function EnemyService:MakeRagdoll(char: Model)
+	local humanoid = char:FindFirstChildOfClass("Humanoid")
 	if humanoid then
 		humanoid:ChangeState(Enum.HumanoidStateType.Physics)
 		humanoid.PlatformStand = true
 	end
 
-	for _, motor in ipairs(character:GetDescendants()) do
+	for _, motor in ipairs(char:GetDescendants()) do
 		if motor:IsA("Motor6D") then
-			local part0 = motor.Part0
-			local part1 = motor.Part1
-
-			local att0 = Instance.new("Attachment")
+			local att0 = Instance.new("Attachment", motor.Part0)
 			att0.CFrame = motor.C0
-			att0.Parent = part0
 
-			local att1 = Instance.new("Attachment")
+			local att1 = Instance.new("Attachment", motor.Part1)
 			att1.CFrame = motor.C1
-			att1.Parent = part1
 
-			local ballSocket = Instance.new("BallSocketConstraint")
-			ballSocket.Attachment0 = att0
-			ballSocket.Attachment1 = att1
-			ballSocket.LimitsEnabled = true
-			ballSocket.TwistLimitsEnabled = true
-			ballSocket.UpperAngle = 90
-			ballSocket.TwistLowerAngle = -45
-			ballSocket.TwistUpperAngle = 45
-			ballSocket.Parent = part0
+			local socket = Instance.new("BallSocketConstraint", motor.Part0)
+			socket.Attachment0 = att0
+			socket.Attachment1 = att1
+			socket.LimitsEnabled = true
+			socket.TwistLimitsEnabled = true
+			socket.UpperAngle = 90
+			socket.TwistLowerAngle = -45
+			socket.TwistUpperAngle = 45
 
 			motor:Destroy()
 		end
 	end
 end
 
-function EnemyService:MoveToTarget(enemy: Model, enemyTarget: Part, newEnemyHumanoidRootPart: Part)
-	local x = enemyTarget.Position.X
-	local y = newEnemyHumanoidRootPart.Position.Y
-	local z = enemyTarget.Position.Z
+function EnemyService:MoveToTarget(enemy: Model, target: Part, hrp: Part)
+	task.spawn(function()
+		local humanoid = enemy:WaitForChild("Humanoid")
+		while enemy.Parent and (hrp.Position - target.Position).Magnitude > 2 do
+			humanoid:MoveTo(Vector3.new(target.Position.X, hrp.Position.Y, target.Position.Z))
+			task.wait(0.2)
+		end
 
-	local targetPosition = Vector3.new(x, y, z)
-
-	enemy.Humanoid:MoveTo(targetPosition)
-	enemy.Humanoid.MoveToFinished:Wait()
-
-	-- Se estiver longe, tenta de novo
-	while (newEnemyHumanoidRootPart.Position - targetPosition).Magnitude > 1 do
-		enemy.Humanoid:MoveTo(targetPosition)
-		enemy.Humanoid.MoveToFinished:Wait()
-	end
-
-	local walkAnimation = animationWalkTrack[enemyTarget]
-	if walkAnimation then
-		walkAnimation:Stop()
-	end
+		local walk = animationWalkTrack[enemy]
+		if walk then
+			walk:Stop()
+		end
+	end)
 end
 
-function EnemyService:GetEnemyTargert(player: Player)
+function EnemyService:GetEnemyTarget(player: Player)
 	local base = BaseService:GetBase(player)
 	local heart = UtilService:WaitForDescendants(base, "baseTemplate", "Heart")
 	return heart.PrimaryPart

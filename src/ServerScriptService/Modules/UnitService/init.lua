@@ -9,6 +9,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
 local blocks = require(ReplicatedStorage.Enums.blocks)
+local melee = require(ReplicatedStorage.Enums.melee)
+local ranged = require(ReplicatedStorage.Enums.ranged)
 local bridge = BridgeNet2.ReferenceBridge("UnitService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -30,6 +32,8 @@ end
 function UnitService:Give(player: Player, unitName: string, unitType: string)
 	local unitTypesMap = {
 		["BLOCK"] = blocks,
+		["MELEE"] = melee,
+		["RANGED"] = ranged,
 	}
 
 	if not unitTypesMap[unitType] then

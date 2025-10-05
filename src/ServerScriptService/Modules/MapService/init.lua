@@ -67,7 +67,20 @@ function MapService:SetItemOnMap(player: Player, unitType: string, unitName: str
 		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)))
 
 		item.Parent = workspace.runtime[player.UserId][unitType]
+
+		if unitType == "MELEE" then
+			-- Adiciona a animação se for melee
+			MapService:CreateWalkAnimation(item)
+		end
 	end
+end
+
+function MapService:CreateWalkAnimation(melee: Model)
+	local AnimationController: AnimationController = melee:FindFirstChild("AnimationController")
+
+	local idle = AnimationController:LoadAnimation(melee.Animations.Idle)
+
+	idle:Play()
 end
 
 function MapService:InitMapFromPlayer(player: Player)

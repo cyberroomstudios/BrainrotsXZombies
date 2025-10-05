@@ -8,6 +8,12 @@ local Melee = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		DetectionRange = {
+			NumberOfStudsForward = 6,
+			NumberOfStudsBehind = 6,
+			NumberOfStudsLeft = 6,
+			NumberOfStudsRight = 6,
+		},
 		GUI = {
 			Name = "Blue Block",
 			Description = "Defend Your Base With 100 XP",
