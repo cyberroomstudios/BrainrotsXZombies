@@ -6,6 +6,7 @@ local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences
 local TeleportController = require(Players.LocalPlayer.PlayerScripts.ClientModules.TeleportController)
 local WaveController = require(Players.LocalPlayer.PlayerScripts.ClientModules.WaveController)
 local UnitsScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.UnitsScreenController)
+local MeleeThreadController = require(Players.LocalPlayer.PlayerScripts.ClientModules.MeleeThreadController)
 
 local storeButton
 local fightButton
@@ -51,6 +52,7 @@ function HudController:InitButtonListerns()
 
 	fightButton.MouseButton1Click:Connect(function()
 		WaveController:Start(player)
+		MeleeThreadController:StartThread()
 	end)
 
 	toolsButton.MouseButton1Click:Connect(function()

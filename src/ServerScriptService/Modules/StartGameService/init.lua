@@ -9,6 +9,7 @@ local BridgeNet2 = require(Utility.BridgeNet2)
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local MapService = require(ServerScriptService.Modules.MapService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
+local UnitService = require(ServerScriptService.Modules.UnitService)
 local bridge = BridgeNet2.ReferenceBridge("StartGameService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -43,6 +44,10 @@ function StartGameService:InitBridgeListener()
 			MapService:InitMapFromPlayer(player)
 
 			StartGameService:CreatePlayerAttributes(player)
+
+			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
+			UnitService:Give(player, "Tower1", "RANGED")
+			UnitService:Give(player, "blue", "BLOCK")
 		end
 	end
 end

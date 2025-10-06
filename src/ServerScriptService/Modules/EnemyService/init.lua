@@ -31,8 +31,6 @@ function EnemyService:Init()
 			animations.attack,
 			animations.walk,
 		})
-
-		print(string.format("[EnemyService] Assets pré-carregados em %.3fs", os.clock() - preloadStart))
 	end)
 end
 
@@ -65,12 +63,8 @@ function EnemyService:SpawnEnemy(player: Player, currentWave: number)
 
 	for i = 1, currentWave do
 		task.spawn(function()
-			local enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
-			while oldSpawn and enemySpawn == oldSpawn do
-				print("Procurando")
-				enemySpawn = enemySpawns[math.random(1, #enemySpawns)]
-				task.wait(1)
-			end
+			local enemySpawn = enemySpawns[math.random(1, 3)]
+
 			oldSpawn = enemySpawn
 			EnemyService:Create(player, enemySpawn)
 		end)

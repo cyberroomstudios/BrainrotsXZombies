@@ -9,10 +9,10 @@ local Melee = table.freeze({
 		Rarity = "COMMON",
 		Odd = 0.07,
 		DetectionRange = {
-			NumberOfStudsForward = 6,
-			NumberOfStudsBehind = 6,
-			NumberOfStudsLeft = 6,
-			NumberOfStudsRight = 6,
+			NumberOfStudsForward = 5,
+			NumberOfStudsBehind = 5,
+			NumberOfStudsLeft = 5,
+			NumberOfStudsRight = 5,
 		},
 		GUI = {
 			Name = "Blue Block",

@@ -1,14 +1,41 @@
+local ThreadService = {}
+
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local MapService = require(ServerScriptService.Modules.MapService)
 local melee = require(ReplicatedStorage.Enums.melee)
 
-local ThreadService = {}
+-- Init Bridg Net
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Utility = ReplicatedStorage.Utility
+local BridgeNet2 = require(Utility.BridgeNet2)
+local bridge = BridgeNet2.ReferenceBridge("ThreadService")
+local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
+local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
+local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
+-- End Bridg Net
+function ThreadService:Init()
+	ThreadService:InitBridgeListener()
+end
 
-function ThreadService:Init() end
-
+function ThreadService:InitBridgeListener()
+	bridge.OnServerInvoke = function(player, data)
+		if data[actionIdentifier] == "TakeDamage" then
+			print("Ataque")
+			local model = data.data.Model
+			print(model)
+			local humanoid = model:FindFirstChildOfClass("Humanoid")
+			print(humanoid)
+			if humanoid and humanoid.Health > 0 then
+				print("Tirando Dano")
+				humanoid:TakeDamage(20)
+			end
+		end
+	end
+end
 function ThreadService:ShootLaser(fromPart, targetPosition, duration)
 	local laser = Instance.new("Part")
 	laser.Anchored = true
@@ -30,120 +57,6 @@ function ThreadService:ShootLaser(fromPart, targetPosition, duration)
 	laser.Parent = workspace
 
 	return laser
-end
-
-function ThreadService:InitThreadRanged2(player: Player)
-	local rangedModelEnemy = {}
-	local function getEnemyInArea(rangedModel: Model)
-		local cf, size = rangedModel:GetBoundingBox()
-
-		local xOffset = 30
-		local zOffset = 30
-		local yHeight = 3
-		local regionSize = Vector3.new(xOffset * 2, yHeight, zOffset * 2)
-		local regionCFrame = CFrame.new(cf.Position)
-
-		local params = OverlapParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { rangedModel }
-
-		local partsInArea = workspace:GetPartBoundsInBox(regionCFrame, regionSize, params)
-
-		for _, part in ipairs(partsInArea) do
-			local character = part:FindFirstAncestorOfClass("Model")
-			if character and character:GetAttribute("IS_ENEMY") then
-				local humanoid = character:FindFirstChild("Humanoid")
-				return character
-			end
-		end
-	end
-
-	local function attack(headRanged: Model, enemy: Model)
-		-- Criar um attachment no Head
-		local attachmentHead = headRanged.PrimaryPart:FindFirstChild("Attachment")
-		if not attachmentHead then
-			attachmentHead = Instance.new("Attachment")
-			attachmentHead.Name = "Attachment"
-			attachmentHead.Parent = headRanged.PrimaryPart
-		end
-
-		-- Criar um attachment no inimigo
-		local attachmentEnemy = enemy.PrimaryPart:FindFirstChild("Attachment")
-		if not attachmentEnemy then
-			attachmentEnemy = Instance.new("Attachment")
-			attachmentEnemy.Name = "Attachment"
-			attachmentEnemy.Parent = enemy.PrimaryPart
-		end
-
-		-- Criar ou reaproveitar o Beam
-		local beam = headRanged.PrimaryPart:FindFirstChild("Beam")
-		if not beam then
-			beam = Instance.new("Beam")
-			beam.Name = "Beam"
-			beam.Parent = headRanged.PrimaryPart
-			beam.Color = ColorSequence.new(Color3.fromRGB(255, 0, 76)) -- cor do raio
-			beam.Width0 = 0.2
-			beam.Width1 = 0.2
-			beam.FaceCamera = true
-		end
-
-		beam.Attachment0 = attachmentHead
-		beam.Attachment1 = attachmentEnemy
-		local vHumanoid = enemy:FindFirstChildOfClass("Humanoid")
-		vHumanoid:TakeDamage(20)
-
-		-- Duração do raio
-		task.delay(0.3, function()
-			if beam then
-				beam:Destroy()
-			end
-		end)
-	end
-
-	local function lookEnemy(headRanged, targetPos, currentPos)
-		local direction = (targetPos - currentPos).Unit
-
-		local cf = CFrame.new(currentPos, currentPos + direction)
-
-		cf = cf * CFrame.Angles(0, math.rad(180), 0)
-
-		headRanged:SetPrimaryPartCFrame(cf)
-	end
-	task.spawn(function()
-		while player:GetAttribute("GAME_ON") do
-			local items = workspace.runtime[player.UserId]["RANGED"]:GetChildren()
-
-			for _, model in ipairs(items) do
-				if model:IsA("Model") then
-					local headRanged = model:FindFirstChild("Head")
-					local cf, size = model:GetBoundingBox()
-
-					if rangedModelEnemy[model] then
-						local enemy = rangedModelEnemy[model]
-
-						if enemy.Parent then
-							local targetPos = enemy.PrimaryPart.Position
-							local currentPos = headRanged.PrimaryPart.Position
-
-							-- Direção para o inimigo
-							lookEnemy(headRanged, targetPos, currentPos)
-
-							-- Ataca!
-							attack(headRanged, enemy)
-							continue
-						end
-					end
-
-					rangedModelEnemy[model] = nil
-					local enemy = getEnemyInArea(model)
-					if enemy then
-						rangedModelEnemy[model] = enemy
-					end
-				end
-			end
-			task.wait(1)
-		end
-	end)
 end
 
 function ThreadService:InitThreadRanged(player: Player)
@@ -250,7 +163,7 @@ function ThreadService:InitThreadRanged(player: Player)
 		-- aplica dano (server side seguro)
 		local humanoid = enemy:FindFirstChildOfClass("Humanoid")
 		if humanoid and humanoid.Health > 0 then
-			humanoid:TakeDamage(20/10)
+			humanoid:TakeDamage(20)
 		end
 
 		task.delay(0.25, function()
@@ -298,76 +211,11 @@ function ThreadService:InitThreadRanged(player: Player)
 		end
 	end)
 end
-function ThreadService:InitThreadMelee(player: Player)
-	local attackAnimations = {}
-
-	function MapService:CreateOrPlayAttackAnimation(melee: Model)
-		if not melee:GetAttribute("ATTACK_ANIMATION_LOADED") then
-			melee:SetAttribute("ATTACK_ANIMATION_LOADED", true)
-			local AnimationController: AnimationController = melee:FindFirstChild("AnimationController")
-			local attackAnimation = AnimationController:LoadAnimation(melee.Animations.Attack)
-			attackAnimation.Priority = Enum.AnimationPriority.Action
-
-			attackAnimations[melee] = attackAnimation
-			print("Carregou Animação")
-		end
-		attackAnimations[melee]:Play()
-	end
-
-	local function getEnemyInArea(rangedModel: Model)
-		local rangedDef = melee[rangedModel.Name]
-
-		-- Pega o centro do modelo
-		local cf, _ = rangedModel:GetBoundingBox()
-
-		-- Calcula o tamanho da região baseado no DetectionRange
-		local xSize = rangedDef.DetectionRange.NumberOfStudsLeft + rangedDef.DetectionRange.NumberOfStudsRight
-		local zSize = rangedDef.DetectionRange.NumberOfStudsForward + rangedDef.DetectionRange.NumberOfStudsBehind
-		local yHeight = 6 -- altura da área (ajuste conforme quiser)
-
-		local regionSize = Vector3.new(xSize, yHeight, zSize)
-		local regionCFrame = CFrame.new(cf.Position)
-
-		-- Configura os parâmetros para ignorar o próprio rangedModel
-		local params = OverlapParams.new()
-		params.FilterType = Enum.RaycastFilterType.Exclude
-		params.FilterDescendantsInstances = { rangedModel }
-
-		-- Obtém todas as partes na área
-		local partsInArea = workspace:GetPartBoundsInBox(regionCFrame, regionSize, params)
-
-		for _, part in ipairs(partsInArea) do
-			print(part)
-			local character = part:FindFirstAncestorOfClass("Model")
-			if character and character:GetAttribute("IS_ENEMY") then
-				local humanoid = character:FindFirstChildOfClass("Humanoid")
-				if humanoid and humanoid.Health > 0 then
-					MapService:CreateOrPlayAttackAnimation(rangedModel)
-					humanoid:TakeDamage(20)
-					return character -- retorna o primeiro inimigo válido encontrado
-				end
-			end
-		end
-
-		return nil -- nenhum inimigo encontrado
-	end
-
-	task.spawn(function()
-		while player:GetAttribute("GAME_ON") do
-			local items = workspace.runtime[player.UserId]["MELEE"]:GetChildren()
-			print("Ataque!")
-
-			for _, item in items do
-				getEnemyInArea(item)
-			end
-			task.wait(1)
-		end
-	end)
-end
 
 function ThreadService:StartRanged(player: Player)
-	ThreadService:InitThreadRanged(player)
-	ThreadService:InitThreadMelee(player)
+	task.spawn(function()
+		ThreadService:InitThreadRanged(player)
+	end)
 end
 
 return ThreadService
