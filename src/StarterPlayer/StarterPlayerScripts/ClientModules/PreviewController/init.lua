@@ -131,6 +131,10 @@ function PreviewController:Start(unitType: string, unitName: string)
 	model.PrimaryPart.CanCollide = false
 	model.PrimaryPart.Anchored = true
 
+	local rotation = CFrame.Angles(0, (player:GetAttribute("BASE") % 2 == 0 and 0 or math.rad(180)), 0)
+
+	model:SetPrimaryPartCFrame(CFrame.new(model.PrimaryPart.Position + Vector3.new(0, 0, 0)) * rotation)
+
 	-- Ignora o player e o preview no raycast
 	local raycastParams = RaycastParams.new()
 	raycastParams.FilterType = Enum.RaycastFilterType.Exclude

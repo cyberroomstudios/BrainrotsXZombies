@@ -78,5 +78,17 @@ function BaseService:GetBase(player: Player)
 	end
 end
 
+function BaseService:GetInitBaseRefPosition(player: Player)
+	local base = BaseService:GetBase(player)
+
+	if base then
+		local initBaseRefPosition = UtilService:WaitForDescendants(base, "baseTemplate", "InitBaseRefPosition")
+		if initBaseRefPosition then
+			local position = initBaseRefPosition.Position
+
+			return position
+		end
+	end
+end
 
 return BaseService

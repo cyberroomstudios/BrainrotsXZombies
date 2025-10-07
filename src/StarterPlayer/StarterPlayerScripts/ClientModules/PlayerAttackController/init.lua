@@ -18,6 +18,7 @@ local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
 local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- End Bridg Net
 
+
 function PlayerAttackController:Init()
 	PlayerAttackController:ConfigureButtonListners()
 	PlayerAttackController:Configure()

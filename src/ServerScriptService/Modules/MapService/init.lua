@@ -46,7 +46,10 @@ function MapService:GetItemFromTypeAndName(unitType: string, unitName: string)
 end
 
 function MapService:SetItemOnMap(player: Player, unitType: string, unitName: string, slot: number, subSlot: number)
+	local function lookAt(model: Model, targetPos: Vector3) end
+
 	local base = BaseService:GetBase(player)
+	local initBaserefPosition = BaseService:GetInitBaseRefPosition(player)
 	if base then
 		local baseTemplate = base.baseTemplate
 
@@ -64,7 +67,10 @@ function MapService:SetItemOnMap(player: Player, unitType: string, unitName: str
 		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
 		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
 
-		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)))
+		local baseIndex = tonumber(base.Name)
+		local rotation = CFrame.Angles(0, (baseIndex % 2 == 0 and 0 or math.rad(180)), 0)
+
+		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)) * rotation)
 
 		item.Parent = workspace.runtime[player.UserId][unitType]
 
@@ -79,7 +85,7 @@ function MapService:CreateWalkAnimation(melee: Model)
 	local AnimationController: AnimationController = melee:FindFirstChild("AnimationController")
 
 	local idle = AnimationController:LoadAnimation(melee.Animations.Idle)
-
+	idle.Priority = Enum.AnimationPriority.Idle
 	idle:Play()
 end
 

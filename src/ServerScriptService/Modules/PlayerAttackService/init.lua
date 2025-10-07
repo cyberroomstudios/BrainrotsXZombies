@@ -17,7 +17,6 @@ end
 function PlayerAttackService:InitBridgeListener()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "Hit" then
-			print("Teste")
 			PlayerAttackService:OnPlayerAttack(player)
 		end
 	end
