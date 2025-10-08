@@ -21,9 +21,19 @@ local RunService = game:GetService("RunService")
 
 local BaseController = require(Players.LocalPlayer.PlayerScripts.ClientModules.BaseController)
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
+local blocks = require(ReplicatedStorage.Enums.blocks)
+local melee = require(ReplicatedStorage.Enums.melee)
+local ranged = require(ReplicatedStorage.Enums.ranged)
 
 local currentItemName = ""
 local currenItemType = ""
+
+local itemsEnum = {
+	["BLOCK"] = blocks,
+	["MELEE"] = melee,
+	["RANGED"] = ranged,
+}
+
 function PreviewController:Init()
 	PreviewController:InitButtonListerns()
 end
@@ -44,7 +54,7 @@ function PreviewController:InitButtonListerns()
 
 				local detector = Instance.new("Part")
 				detector.Size = regionSize
-				detector.CFrame = CFrame.new(previewPos.X, 6.25, previewPos.Z)
+			detector.CFrame = CFrame.new(previewPos.X, 6.25, previewPos.Z)
 				detector.Anchored = true
 				detector.CanCollide = true -- precisa ser true para GetTouchingParts
 				detector.Transparency = 1
@@ -63,6 +73,7 @@ function PreviewController:InitButtonListerns()
 
 				detector:Destroy()
 
+				local isBrainrot = false
 				local result = bridge:InvokeServerAsync({
 					[actionIdentifier] = "SetItem",
 					data = {
@@ -70,6 +81,7 @@ function PreviewController:InitButtonListerns()
 						ItemName = currentItemName,
 						Slot = slot,
 						SubSlot = subSlot,
+						IsBrainrot = itemsEnum[currenItemType][currentItemName].IsBrainrot,
 					},
 				})
 			end

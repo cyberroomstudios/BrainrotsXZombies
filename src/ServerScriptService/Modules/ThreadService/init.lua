@@ -214,7 +214,7 @@ end
 
 function ThreadService:StartRanged(player: Player)
 	task.spawn(function()
-		ThreadService:InitThreadRanged(player)
+	--	ThreadService:InitThreadRanged(player)
 	end)
 end
 

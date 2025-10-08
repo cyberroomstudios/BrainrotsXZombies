@@ -17,6 +17,7 @@ local melee = require(ReplicatedStorage.Enums.melee)
 
 local player = Players.LocalPlayer
 local PROCESS_PER_FRAME = 10
+
 function MeleeThreadController:Init() end
 
 function MeleeThreadController:CreateRegion(meleeDef)
