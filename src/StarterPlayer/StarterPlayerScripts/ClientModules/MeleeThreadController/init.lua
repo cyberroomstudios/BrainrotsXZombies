@@ -17,6 +17,7 @@ local melee = require(ReplicatedStorage.Enums.melee)
 
 local player = Players.LocalPlayer
 local PROCESS_PER_FRAME = 10
+
 function MeleeThreadController:Init() end
 
 function MeleeThreadController:CreateRegion(meleeDef)
@@ -114,30 +115,32 @@ function MeleeThreadController:StartThread()
 
 	local index = 1
 	local meleesModeList = workspace.runtime[player.UserId]["MELEE"]:GetChildren()
-	RunService.Heartbeat:Connect(function()
-		for _ = 1, PROCESS_PER_FRAME do
-			local model = meleesModeList[index]
-			index += 1
-			if index > #meleesModeList then
-				index = 1
+	if next(meleesModeList) then
+		RunService.Heartbeat:Connect(function()
+			for _ = 1, PROCESS_PER_FRAME do
+				local model = meleesModeList[index]
+				index += 1
+				if index > #meleesModeList then
+					index = 1
+				end
+
+				local def = melee[model.Name]
+
+				-- Cria a região de verificação ou pega do cache
+				local regionSize = regionCache[model.Name]
+				if not regionSize then
+					regionCache[model.Name] = MeleeThreadController:CreateRegion(def)
+					regionSize = regionCache[model.Name]
+				end
+
+				local humanoidCooldowns = {}
+
+				local partsInRegion = MeleeThreadController:GetPartsInRegion(model, overlapParams, regionSize)
+
+				MeleeThreadController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, attackAnimation)
 			end
-
-			local def = melee[model.Name]
-
-			-- Cria a região de verificação ou pega do cache
-			local regionSize = regionCache[model.Name]
-			if not regionSize then
-				regionCache[model.Name] = MeleeThreadController:CreateRegion(def)
-				regionSize = regionCache[model.Name]
-			end
-
-			local humanoidCooldowns = {}
-
-			local partsInRegion = MeleeThreadController:GetPartsInRegion(model, overlapParams, regionSize)
-
-			MeleeThreadController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, attackAnimation)
-		end
-	end)
+		end)
+	end
 end
 
 return MeleeThreadController

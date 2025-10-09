@@ -27,15 +27,23 @@ function PreviewService:InitBridgeListener()
 			local itemName = data.data.ItemName
 			local slot = data.data.Slot
 			local subSlot = data.data.SubSlot
-
-			PreviewService:SetItem(player, itemType, itemName, slot, subSlot)
+			local isBrainrot = data.data.IsBrainrot
+			
+			PreviewService:SetItem(player, itemType, itemName, slot, subSlot, isBrainrot)
 		end
 	end
 end
 
-function PreviewService:SetItem(player: Player, itemType: string, itemName: string, slot: number, subSlot: number)
-	MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot)
-	MapService:AddItemInDataBase(player, itemType, itemName, slot, subSlot)
+function PreviewService:SetItem(
+	player: Player,
+	itemType: string,
+	itemName: string,
+	slot: number,
+	subSlot: number,
+	isBrainrot: boolean
+)
+	MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot, isBrainrot)
+	MapService:AddItemInDataBase(player, itemType, itemName, slot, subSlot, isBrainrot)
 end
 
 return PreviewService

@@ -8,6 +8,8 @@ local Melee = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		IsBrainrot = true,
+
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 5,
@@ -30,6 +32,8 @@ local Melee = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		IsBrainrot = true,
+
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 0,
@@ -53,6 +57,8 @@ local Melee = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		IsBrainrot = true,
+
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 2,

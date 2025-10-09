@@ -51,6 +51,7 @@ function UnitService:Give(player: Player, unitName: string, unitType: string)
 			UnitName = unitName,
 			UnitType = unitType,
 			Amount = 1,
+			IsBrainrot = unitTypesMap[unitType][unitName].IsBrainrot,
 		}
 
 		for _, value in ipairs(current) do

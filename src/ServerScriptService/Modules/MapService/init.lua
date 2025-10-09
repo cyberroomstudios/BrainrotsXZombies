@@ -6,10 +6,18 @@ local ServerScriptService = game:GetService("ServerScriptService")
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local BaseService = require(ServerScriptService.Modules.BaseService)
+local blocks = require(ReplicatedStorage.Enums.blocks)
 
 function MapService:Init() end
 
-function MapService:AddItemInDataBase(player: Player, itemType: string, itemName: string, slot: string, subSlot: string)
+function MapService:AddItemInDataBase(
+	player: Player,
+	itemType: string,
+	itemName: string,
+	slot: string,
+	subSlot: string,
+	isBrainrot: boolean
+)
 	local itemOnMapId = PlayerDataHandler:Get(player, "itemOnMapId")
 	local data = {
 		Id = itemOnMapId + 1,
@@ -17,6 +25,7 @@ function MapService:AddItemInDataBase(player: Player, itemType: string, itemName
 		Name = itemName,
 		Slot = slot,
 		SubSlot = subSlot,
+		IsBrainrot = isBrainrot,
 	}
 
 	PlayerDataHandler:Set(player, "itemOnMapId", itemOnMapId + 1)
@@ -45,8 +54,14 @@ function MapService:GetItemFromTypeAndName(unitType: string, unitName: string)
 	end
 end
 
-function MapService:SetItemOnMap(player: Player, unitType: string, unitName: string, slot: number, subSlot: number)
-	local function lookAt(model: Model, targetPos: Vector3) end
+function MapService:SetItemOnMap(
+	player: Player,
+	unitType: string,
+	unitName: string,
+	slot: number,
+	subSlot: number,
+	isBrainrot: boolean
+)
 
 	local base = BaseService:GetBase(player)
 	local initBaserefPosition = BaseService:GetInitBaseRefPosition(player)
@@ -72,19 +87,20 @@ function MapService:SetItemOnMap(player: Player, unitType: string, unitName: str
 
 		item:SetPrimaryPartCFrame(CFrame.new(position + Vector3.new(0, yOffset, 0)) * rotation)
 
+		item:SetAttribute("IS_BRAINROT", isBrainrot)
 		item.Parent = workspace.runtime[player.UserId][unitType]
 
-		if unitType == "MELEE" then
+		if isBrainrot then
 			-- Adiciona a animação se for melee
 			MapService:CreateWalkAnimation(item)
 		end
 	end
 end
 
-function MapService:CreateWalkAnimation(melee: Model)
-	local AnimationController: AnimationController = melee:FindFirstChild("AnimationController")
+function MapService:CreateWalkAnimation(model: Model)
+	local AnimationController: AnimationController = model:FindFirstChild("AnimationController")
 
-	local idle = AnimationController:LoadAnimation(melee.Animations.Idle)
+	local idle = AnimationController:LoadAnimation(model.Animations.Idle)
 	idle.Priority = Enum.AnimationPriority.Idle
 	idle:Play()
 end
@@ -97,8 +113,9 @@ function MapService:InitMapFromPlayer(player: Player)
 		local itemName = item.Name
 		local slot = item.Slot
 		local subSlot = item.SubSlot
+		local isBrainrot = item.IsBrainrot
 
-		MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot)
+		MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot, isBrainrot)
 	end
 end
 
