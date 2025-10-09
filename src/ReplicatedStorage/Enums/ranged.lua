@@ -8,6 +8,12 @@ local Ranged = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		DetectionRange = {
+			NumberOfStudsForward = 10,
+			NumberOfStudsBehind = 10,
+			NumberOfStudsLeft = 10,
+			NumberOfStudsRight = 10,
+		},
 		GUI = {
 			Name = "Blue Block",
 			Description = "Defend Your Base With 100 XP",
@@ -25,6 +31,12 @@ local Ranged = table.freeze({
 		Price = 1000,
 		Rarity = "COMMON",
 		Odd = 0.07,
+		DetectionRange = {
+			NumberOfStudsForward = 10,
+			NumberOfStudsBehind = 10,
+			NumberOfStudsLeft = 10,
+			NumberOfStudsRight = 10,
+		},
 		GUI = {
 			Name = "Blue Block",
 			Description = "Defend Your Base With 100 XP",

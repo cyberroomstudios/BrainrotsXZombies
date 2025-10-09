@@ -79,7 +79,7 @@ function ThreadService:InitThreadRanged(player: Player)
 
 	-- Pool de attachments e beams
 	local function getOrCreateAttachment(part: BasePart, name: string)
-		local att = part:FindFirstChild(name)
+		local attf = part:FindFirstChild(name)
 		if not att then
 			att = Instance.new("Attachment")
 			att.Name = name
