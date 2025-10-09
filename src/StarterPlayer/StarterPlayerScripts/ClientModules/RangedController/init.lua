@@ -53,9 +53,11 @@ function RangedController:GetOrCreateBeam(model: Model)
 
 		beam = Instance.new("Beam")
 		beam.Name = "Beam"
-		beam.Color = ColorSequence.new(Color3.fromRGB(0, 0, 0))
-		beam.Width0 = 0.1
-		beam.Width1 = 0.1
+		beam.Color = ColorSequence.new(Color3.fromRGB(255, 255, 255))
+		beam.Width0 = 0.2
+		beam.Width1 = 0.2
+		beam.Transparency = NumberSequence.new(0)
+
 		beam.FaceCamera = true
 		beam.Enabled = false
 		beam.Attachment0 = a0
@@ -89,20 +91,19 @@ function RangedController:Attack(model: Model, enemy: Model)
 	beam.Enabled = true
 
 	local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-	if humanoid and humanoid.Health > 0 then
-		local result = bridge:InvokeServerAsync({
-			[actionIdentifier] = "TakeDamage",
-			data = {
-				Model = ancestor,
-			},
-		})
-	end
-
-	task.delay(0.1, function()
+	task.delay(0.05, function()
 		if beam then
 			beam.Enabled = false
 		end
 	end)
+	if humanoid and humanoid.Health > 0 then
+		local result = bridge:InvokeServerAsync({
+			[actionIdentifier] = "TakeDamage",
+			data = {
+				Model = enemy,
+			},
+		})
+	end
 end
 
 function RangedController:LookAt(model: Model, targetPos: Vector3)
@@ -150,6 +151,7 @@ function RangedController:VerifyPartsInRegion(model, humanoidCooldowns, partsInR
 
 				if not lastHit or now - lastHit >= 2 then
 					-- Atualiza o tempo do último hit
+					now = os.clock()
 					humanoidCooldowns[humanoid] = now
 
 					local anim = attackAnimation[model]
@@ -201,6 +203,7 @@ function RangedController:StartThread()
 	local index = 1
 	local rangedModeList = workspace.runtime[player.UserId]["RANGED"]:GetChildren()
 	if next(rangedModeList) then
+		local humanoidCooldowns = {}
 		RunService.Heartbeat:Connect(function()
 			for _ = 1, PROCESS_PER_FRAME do
 				local model = rangedModeList[index]
@@ -217,8 +220,6 @@ function RangedController:StartThread()
 					regionCache[model.Name] = RangedController:CreateRegion(def)
 					regionSize = regionCache[model.Name]
 				end
-
-				local humanoidCooldowns = {}
 
 				local partsInRegion = RangedController:GetPartsInRegion(model, overlapParams, regionSize)
 

@@ -46,11 +46,12 @@ function StartGameService:InitBridgeListener()
 			StartGameService:CreatePlayerAttributes(player)
 
 			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
-			UnitService:Give(player, "tungTungSahur", "MELEE")
-			UnitService:Give(player, "odin", "MELEE")
+			--			UnitService:Give(player, "tungTungSahur", "MELEE")
+			--			UnitService:Give(player, "odin", "MELEE")
 
-			UnitService:Give(player, "Tower1", "RANGED")
+			--			UnitService:Give(player, "Tower1", "RANGED")
 			UnitService:Give(player, "bobritoBandito", "RANGED")
+			UnitService:Give(player, "Noobini", "RANGED")
 
 			UnitService:Give(player, "blue", "BLOCK")
 		end
