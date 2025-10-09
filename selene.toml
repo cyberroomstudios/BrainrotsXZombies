@@ -1,0 +1,7 @@
+std = "roblox"
+
+[globals]
+allow_defined = ["_G"]
+
+[rules]
+unused_variable = "warn"

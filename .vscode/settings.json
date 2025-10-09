@@ -1,5 +1,4 @@
 {
-    "robloxLsp.diagnostics.disable": [
-        "unused-local"
-    ]
+  "robloxLsp.diagnostics.disable": ["unused-local"],
+  "stylua.targetReleaseVersion": "latest"
 }
