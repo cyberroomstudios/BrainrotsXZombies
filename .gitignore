@@ -1,6 +1,12 @@
 # Project place file
-/BananaRNG.rbxlx
+/*.rbxlx
 
 # Roblox Studio lock files
 /*.rbxlx.lock
 /*.rbxl.lock
+
+# Wally packages
+Packages/
+
+# Mac OS finder files
+.DS_Store
