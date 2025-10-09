@@ -53,11 +53,11 @@ function BaseStoreScreenController:CreateButtonListeners()
 		local result = bridge:InvokeServerAsync({
 			[actionIdentifier] = "BuyItem",
 			data = {
-				Item = selectedItem
-			}
+				Item = selectedItem,
+			},
 		})
 	end)
-	
+
 	robuxButton.MouseButton1Click:Connect(function()
 		print("Robux")
 	end)
@@ -65,7 +65,6 @@ function BaseStoreScreenController:CreateButtonListeners()
 	restockButton.MouseButton1Click:Connect(function()
 		print("Restock")
 	end)
-
 end
 function BaseStoreScreenController:ConfigureProximity()
 	local proximityPart = ClientUtil:WaitForDescendants(workspace, "map", "stores", "base", "store", "ProximityPart")
@@ -78,9 +77,7 @@ function BaseStoreScreenController:ConfigureProximity()
 			[actionIdentifier] = "GetStock",
 		})
 
-		
 		BaseStoreScreenController:BuildBlocks(result.Blocks)
-	
 	end)
 
 	proximityPrompt.PromptHidden:Connect(function()
@@ -105,7 +102,7 @@ end
 
 function BaseStoreScreenController:BuildBlocks(blocksList)
 	local itemsFolder = ReplicatedStorage.GUI.Shop.Items
-	
+
 	for index, value in blocksList do
 		local blockInfo = blocks[index]
 
@@ -124,7 +121,7 @@ function BaseStoreScreenController:BuildBlocks(blocksList)
 				local currentLayoutOrder = newItem.LayoutOrder
 				selectedItem = {
 					Type = "BLOCK",
-					Name = index
+					Name = index,
 				}
 				for _, item in blocksContainer:GetChildren() do
 					if not item:IsA("UIListLayout") then
@@ -139,7 +136,6 @@ function BaseStoreScreenController:BuildBlocks(blocksList)
 			end)
 		end
 	end
-
 end
 
 return BaseStoreScreenController
