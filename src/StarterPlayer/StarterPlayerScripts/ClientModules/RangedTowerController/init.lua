@@ -1,4 +1,5 @@
-local RangedController = {}
+local RangedTowerController = {}
+
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
@@ -18,38 +19,37 @@ local ranged = require(ReplicatedStorage.Enums.ranged)
 local player = Players.LocalPlayer
 local PROCESS_PER_FRAME = 10
 local ATTACK_COOLDOWN = 0.6
-
 local rangedCooldowns = {}
-function RangedController:Init() end
 
-function RangedController:CreateRegion(ranged)
-	local regionSize = Vector3.new(
-		ranged.DetectionRange.NumberOfStudsLeft + ranged.DetectionRange.NumberOfStudsRight + 2,
-		12,
-		ranged.DetectionRange.NumberOfStudsForward + ranged.DetectionRange.NumberOfStudsBehind + 2
-	)
+function RangedTowerController:Init() end
 
-	return regionSize
+function RangedTowerController:LookAt(model: Model, targetPos: Vector3)
+	local primary = model.PrimaryPart
+	if not primary then
+		return
+	end
+
+	local pos = primary.Position
+
+	local flatTarget = Vector3.new(targetPos.X, pos.Y, targetPos.Z)
+
+	local lookCF = CFrame.lookAt(pos, flatTarget)
+
+	local _, yRot, _ = lookCF:ToOrientation()
+	local _, currentY, _ = primary.CFrame:ToOrientation()
+
+	local newCF = CFrame.new(pos) * CFrame.Angles(0, yRot, 0) 
+	model:SetPrimaryPartCFrame(newCF)
 end
 
-function RangedController:GetOrCreateBeam(model: Model)
+function RangedTowerController:GetOrCreateBeam(model: Model)
+	local head = model:WaitForChild("Head")
+	local hitRef = head:WaitForChild("hitRef")
 	local primary = model.PrimaryPart
-	local rootPart = model:FindFirstChild("RootPart")
-	local descendants = rootPart:GetDescendants()
-	local hitRef
-
-	for _, value in descendants do
-		if value.Name == "hitRef" then
-			hitRef = value
-		end
-	end
-	if not primary or not hitRef then
-		return nil
-	end
 
 	local beam = primary:FindFirstChild("Beam")
 	if not beam then
-		local a0 = RangedController:GetOrCreateAttachment(hitRef, "A0")
+		local a0 = RangedTowerController:GetOrCreateAttachment(hitRef, "A0")
 
 		beam = Instance.new("Beam")
 		beam.Name = "Beam"
@@ -67,7 +67,7 @@ function RangedController:GetOrCreateBeam(model: Model)
 	return beam
 end
 
-function RangedController:GetOrCreateAttachment(part: BasePart, name: string)
+function RangedTowerController:GetOrCreateAttachment(part: BasePart, name: string)
 	local att = part:FindFirstChild(name)
 	if not att then
 		att = Instance.new("Attachment")
@@ -77,21 +77,21 @@ function RangedController:GetOrCreateAttachment(part: BasePart, name: string)
 	return att
 end
 
-function RangedController:Attack(model: Model, enemy: Model)
+function RangedTowerController:Attack(model: Model, enemy: Model)
 	local now = os.clock()
 	if rangedCooldowns[model] and now - rangedCooldowns[model] < ATTACK_COOLDOWN then
 		return
 	end
 	rangedCooldowns[model] = now
 
-	local beam = RangedController:GetOrCreateBeam(model)
-	local a1 = RangedController:GetOrCreateAttachment(enemy.PrimaryPart, "A1")
+	local beam = RangedTowerController:GetOrCreateBeam(model)
+	local a1 = RangedTowerController:GetOrCreateAttachment(enemy.PrimaryPart, "A1")
 
 	beam.Attachment1 = a1
 	beam.Enabled = true
 
 	local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-	task.delay(0.05, function()
+	task.delay(0.25, function()
 		if beam then
 			beam.Enabled = false
 		end
@@ -106,19 +106,17 @@ function RangedController:Attack(model: Model, enemy: Model)
 	end
 end
 
-function RangedController:LookAt(model: Model, targetPos: Vector3)
-	local primary = model.PrimaryPart
-	if not primary then
-		return
-	end
+function RangedTowerController:CreateRegion(ranged)
+	local regionSize = Vector3.new(
+		ranged.DetectionRange.NumberOfStudsLeft + ranged.DetectionRange.NumberOfStudsRight + 2,
+		12,
+		ranged.DetectionRange.NumberOfStudsForward + ranged.DetectionRange.NumberOfStudsBehind + 2
+	)
 
-	local flatTarget = Vector3.new(targetPos.X, primary.Position.Y, targetPos.Z)
-
-	local cf = CFrame.lookAt(primary.Position, flatTarget)
-	model:PivotTo(cf)
+	return regionSize
 end
 
-function RangedController:GetPartsInRegion(meleesModek: Model, overlapParams: OverlapParams, regionSize)
+function RangedTowerController:GetPartsInRegion(meleesModek: Model, overlapParams: OverlapParams, regionSize)
 	local cf = meleesModek:GetBoundingBox()
 
 	-- Cria a Part de visualização
@@ -138,7 +136,7 @@ function RangedController:GetPartsInRegion(meleesModek: Model, overlapParams: Ov
 	return parts
 end
 
-function RangedController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, attackAnimation)
+function RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion)
 	for _, part in partsInRegion do
 		local ancestor = part:FindFirstAncestorOfClass("Model")
 		if ancestor and ancestor:GetAttribute("IS_ENEMY") then
@@ -154,15 +152,8 @@ function RangedController:VerifyPartsInRegion(model, humanoidCooldowns, partsInR
 					now = os.clock()
 					humanoidCooldowns[humanoid] = now
 
-					local anim = attackAnimation[model]
-					if anim and not anim.IsPlaying then
-						RangedController:LookAt(model, ancestor.PrimaryPart.Position)
-						anim.Looped = false
-						anim:Play()
-						anim:AdjustSpeed(1.5)
-
-						RangedController:Attack(model, ancestor)
-					end
+					RangedTowerController:LookAt(model.Head, ancestor.PrimaryPart.Position)
+					RangedTowerController:Attack(model, ancestor)
 				end
 				break
 			end
@@ -170,28 +161,8 @@ function RangedController:VerifyPartsInRegion(model, humanoidCooldowns, partsInR
 	end
 end
 
-function RangedController:PreCreateAnimations()
-	local attackAnimation = {}
-	local rangedModeList = workspace.runtime[player.UserId]["RANGED"]:GetChildren()
-
-	-- Pré-carrega animações antes do loop principal
-	for _, model in rangedModeList do
-		local animCtrl = model:FindFirstChildOfClass("AnimationController")
-		if animCtrl and model:FindFirstChild("Animations") then
-			local attack = animCtrl:LoadAnimation(model.Animations.Attack)
-			attack.Priority = Enum.AnimationPriority.Action
-			--attack:AdjustSpeed(1.5)
-			attackAnimation[model] = attack
-		end
-		model:SetAttribute("LOADED_ATTACK_ANIMATION", true)
-	end
-
-	return attackAnimation
-end
-
-function RangedController:StartThread()
+function RangedTowerController:StartThread()
 	-- Animações de Ataque
-	local attackAnimation = RangedController:PreCreateAnimations()
 
 	-- Armazena as regiões de verificação
 	local regionCache = {}
@@ -205,8 +176,7 @@ function RangedController:StartThread()
 	local rangedModeList = {}
 
 	for _, value in allrangedModeList do
-		if value:GetAttribute("IS_BRAINROT") then
-			print("Inseriu")
+		if not value:GetAttribute("IS_BRAINROT") then
 			table.insert(rangedModeList, value)
 		end
 	end
@@ -225,16 +195,15 @@ function RangedController:StartThread()
 				-- Cria a região de verificação ou pega do cache
 				local regionSize = regionCache[model.Name]
 				if not regionSize then
-					regionCache[model.Name] = RangedController:CreateRegion(def)
+					regionCache[model.Name] = RangedTowerController:CreateRegion(def)
 					regionSize = regionCache[model.Name]
 				end
 
-				local partsInRegion = RangedController:GetPartsInRegion(model, overlapParams, regionSize)
+				local partsInRegion = RangedTowerController:GetPartsInRegion(model, overlapParams, regionSize)
 
-				RangedController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, attackAnimation)
+				RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion)
 			end
 		end)
 	end
 end
-
-return RangedController
+return RangedTowerController
