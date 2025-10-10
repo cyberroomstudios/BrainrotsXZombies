@@ -8,6 +8,7 @@ local WaveController = require(Players.LocalPlayer.PlayerScripts.ClientModules.W
 local UnitsScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.UnitsScreenController)
 local MeleeThreadController = require(Players.LocalPlayer.PlayerScripts.ClientModules.MeleeThreadController)
 local RangedController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedController)
+local RangedTowerController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedTowerController)
 
 local storeButton
 local fightButton
@@ -55,6 +56,7 @@ function HudController:InitButtonListerns()
 		WaveController:Start(player)
 		MeleeThreadController:StartThread()
 		RangedController:StartThread()
+		RangedTowerController:StartThread()
 	end)
 
 	toolsButton.MouseButton1Click:Connect(function()

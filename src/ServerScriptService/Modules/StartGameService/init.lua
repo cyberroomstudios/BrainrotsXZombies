@@ -44,16 +44,18 @@ function StartGameService:InitBridgeListener()
 			MapService:InitMapFromPlayer(player)
 
 			StartGameService:CreatePlayerAttributes(player)
+			UnitService:Give(player, "TowerLevel1", "RANGED")
+			UnitService:Give(player, "TowerLevel2", "RANGED")
 
-			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
+			--	UnitService:Give(player, "cappuccinoAssassino", "MELEE")
 			--			UnitService:Give(player, "tungTungSahur", "MELEE")
 			--			UnitService:Give(player, "odin", "MELEE")
 
 			--			UnitService:Give(player, "Tower1", "RANGED")
-			UnitService:Give(player, "bobritoBandito", "RANGED")
-			UnitService:Give(player, "Noobini", "RANGED")
+			--	UnitService:Give(player, "bobritoBandito", "RANGED")
+			--	UnitService:Give(player, "Noobini", "RANGED")
 
-			UnitService:Give(player, "blue", "BLOCK")
+			--	UnitService:Give(player, "blue", "BLOCK")
 		end
 	end
 end
