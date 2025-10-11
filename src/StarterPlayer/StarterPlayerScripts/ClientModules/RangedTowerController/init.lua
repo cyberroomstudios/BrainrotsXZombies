@@ -48,7 +48,6 @@ function RangedTowerController:GetOrCreateBeam(model: Model, hitRef)
 
 	local beam = hitRef:FindFirstChild("Beam")
 	if not beam then
-		print("Criando Beam!")
 		local a0 = RangedTowerController:GetOrCreateAttachment(hitRef, "A0")
 
 		beam = Instance.new("Beam")
@@ -74,28 +73,33 @@ function RangedTowerController:GetOrCreateAttachment(part: BasePart, name: strin
 		att.Name = name
 		att.Parent = part
 	end
+
 	return att
 end
 
-function RangedTowerController:Attack(model: Model, enemy: Model, hitRef)
+function RangedTowerController:Attack(model: Model, enemy: Model, hitRefModel)
 	local now = os.clock()
 	if rangedCooldowns[model] and now - rangedCooldowns[model] < ATTACK_COOLDOWN then
 		return
 	end
 	rangedCooldowns[model] = now
 
-	local beam = RangedTowerController:GetOrCreateBeam(model, hitRef)
-	local a1 = RangedTowerController:GetOrCreateAttachment(enemy.PrimaryPart, "A1")
+	for _, hit in hitRefModel[model] do
+		local beam = RangedTowerController:GetOrCreateBeam(model, hit)
+		local a1 = RangedTowerController:GetOrCreateAttachment(enemy.PrimaryPart, "A1")
 
-	beam.Attachment1 = a1
-	beam.Enabled = true
+		beam.Attachment1 = a1
+		beam.Enabled = true
+
+		task.delay(0.25, function()
+			if beam then
+				beam.Enabled = false
+			end
+		end)
+	end
 
 	local humanoid = enemy:FindFirstChildOfClass("Humanoid")
-	task.delay(0.25, function()
-		if beam then
-			beam.Enabled = false
-		end
-	end)
+
 	if humanoid and humanoid.Health > 0 then
 		local result = bridge:InvokeServerAsync({
 			[actionIdentifier] = "TakeDamage",
@@ -154,10 +158,7 @@ function RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, par
 
 					RangedTowerController:LookAt(model.Head, ancestor.PrimaryPart.Position)
 
-					print(hitRefModel[model])
-					for _, hit in hitRefModel[model] do
-						RangedTowerController:Attack(model, ancestor, hit)
-					end
+					RangedTowerController:Attack(model, ancestor, hitRefModel)
 				end
 				break
 			end
