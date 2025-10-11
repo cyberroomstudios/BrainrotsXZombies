@@ -41,7 +41,7 @@ function WaveService:StartWave(player: Player)
 	task.spawn(function()
 		player:SetAttribute("BASE_LIFE", 100)
 		player:SetAttribute("CURRENT_WAVE", 1)
-		EnemyService:SpawnEnemy(player, 5)
+		EnemyService:SpawnEnemy(player, 1)
 	end)
 end
 
