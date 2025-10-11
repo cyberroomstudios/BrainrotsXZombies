@@ -10,6 +10,7 @@ local BaseService = require(ServerScriptService.Modules.BaseService)
 local MapService = require(ServerScriptService.Modules.MapService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local UnitService = require(ServerScriptService.Modules.UnitService)
+local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local bridge = BridgeNet2.ReferenceBridge("StartGameService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -42,6 +43,8 @@ function StartGameService:InitBridgeListener()
 			BaseService:Allocate(player)
 
 			MapService:InitMapFromPlayer(player)
+
+			 StartGameService:InitPlayerAtributes(player)
 
 			StartGameService:CreatePlayerAttributes(player)
 			UnitService:Give(player, "TowerLevel1", "RANGED")
@@ -94,6 +97,14 @@ function StartGameService:CreatePlayerAttributes(player: Player)
 	if baseSpawn then
 		player:SetAttribute("SPAWN_BASE_STORE_CFRAME", baseSpawn.CFrame)
 	end
+end
+
+
+function StartGameService:InitPlayerAtributes(player: Player)
+	-- Inicializando o Dinheiro
+	local money = PlayerDataHandler:Get(player, "money")
+	player:SetAttribute("MONEY", money)
+
 end
 
 return StartGameService
