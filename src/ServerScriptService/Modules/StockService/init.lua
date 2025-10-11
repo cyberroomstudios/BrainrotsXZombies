@@ -42,13 +42,45 @@ local GlobalStock = {
 	Ranged = {},
 }
 local PlayerStock = {}
-local CurrentTimeToReload: number
+local CurrentCycleId: number?
 
 -- === LOCAL FUNCTIONS
 local function sortByGuiOrder(t: table): ()
 	table.sort(t, function(a, b)
 		return a.GUI.Order < b.GUI.Order
 	end)
+end
+
+local function getCycleIdFromUnix(unixTimestamp: number): number
+	return math.floor(unixTimestamp / TIME_TO_RELOAD_STOCK)
+end
+
+local function getSecondsUntilNextCycle(unixTimestamp: number): number
+	local elapsedInCycle = unixTimestamp % TIME_TO_RELOAD_STOCK
+	local secondsRemaining = TIME_TO_RELOAD_STOCK - elapsedInCycle
+	if secondsRemaining == 0 then
+		return TIME_TO_RELOAD_STOCK
+	end
+	return secondsRemaining
+end
+
+local function getOrderedRarityKeys(): { string }
+	local rarityEntries = {}
+	for rarityName, rarityData in UnitsRarity do
+		table.insert(rarityEntries, {
+			Name = rarityName,
+			Data = rarityData,
+		})
+	end
+	table.sort(rarityEntries, function(a, b)
+		return a.Data.GUI.Order < b.Data.GUI.Order
+	end)
+
+	local orderedKeys = {}
+	for _, entry in rarityEntries do
+		table.insert(orderedKeys, entry.Name)
+	end
+	return orderedKeys
 end
 
 -- === GLOBAL FUNCTIONS
@@ -58,20 +90,19 @@ function StockService:Init(): ()
 end
 
 function StockService:InitGlobalStock(): ()
-	local orderedRarities: ET.UnitsRarity = table.clone(UnitsRarity)
-	sortByGuiOrder(orderedRarities)
+	local orderedRarityKeys = getOrderedRarityKeys()
 
-	local function initGlobalStockCategory(enum: { [string]: ET.Item }, category: string, rarityIndex: number): ()
-		local items = table.clone(StockService:GetStockFromRarity(enum, rarityIndex))
+	local function initGlobalStockCategory(enum: { [string]: ET.Item }, category: string, rarityName: string): ()
+		local items = table.clone(StockService:GetStockFromRarity(enum, rarityName))
 		sortByGuiOrder(items)
 		for blockIndex, value in items do
 			GlobalStock[category][value.Name] = 0
 		end
 	end
 
-	for index, rarity in orderedRarities do
+	for _, rarityName in orderedRarityKeys do
 		for categoryName, enum in CategoryEnums do
-			initGlobalStockCategory(enum, categoryName, index)
+			initGlobalStockCategory(enum, categoryName, rarityName)
 		end
 	end
 end
@@ -98,17 +129,21 @@ function StockService:GetStock(player: Player): table
 end
 
 function StockService:InitStockCounter(): ()
-	CurrentTimeToReload = TIME_TO_RELOAD_STOCK
 	task.spawn(function(): ()
 		while true do
-			StockService:InitGlobalStock()
-			StockService:CreateItemsStock()
-			while CurrentTimeToReload > 0 do
-				CurrentTimeToReload -= 1
-				workspace:SetAttribute("TIME_TO_RELOAD_RESTOCK", CurrentTimeToReload)
-				task.wait(1)
+			local now: number = os.time()
+			local cycleId: number = getCycleIdFromUnix(now)
+
+			if CurrentCycleId ~= cycleId then
+				Debug.print("StockService:InitStockCounter - NewCycleDetected", cycleId)
+				StockService:InitGlobalStock()
+				StockService:CreateItemsStock(cycleId)
+				CurrentCycleId = cycleId
 			end
-			CurrentTimeToReload = TIME_TO_RELOAD_STOCK
+
+			local currTimeToReload = getSecondsUntilNextCycle(now)
+			workspace:SetAttribute("TIME_TO_RELOAD_RESTOCK", currTimeToReload)
+			task.wait(1)
 		end
 	end)
 end
@@ -126,14 +161,15 @@ function StockService:GetStockFromRarity(enum: table, rarityName: string): { ET.
 	return selectedItems
 end
 
-function StockService:CreateItemsStock(): ()
+function StockService:CreateItemsStock(cycleId: number): ()
 	local raffledRarities: { string } = {}
-	local seed: number = tick()
-	Debug.print("StockService:CreateItemsStock - Seed", seed)
-	local random = Random.new(seed)
+	Debug.print("StockService:CreateItemsStock - Seed", cycleId)
+	local random = Random.new(cycleId)
 
 	-- Pega todas as categorias e vê quais vão ser sorteadas
-	for rarityName, rarityData in UnitsRarity do
+	local orderedRarityKeys = getOrderedRarityKeys()
+	for _, rarityName in orderedRarityKeys do
+		local rarityData = UnitsRarity[rarityName]
 		local odd: number = rarityData.Odd
 		local roll: number = random:NextNumber()
 		Debug.print("StockService:CreateItemsStock - RarityRoll", rarityName, "Odd:", odd, "Roll:", roll)
@@ -149,8 +185,8 @@ function StockService:CreateItemsStock(): ()
 	end
 
 	for _, rarity in raffledRarities do
-		for category, items in raffledItems do
-			local enum = CategoryEnums[category]
+		for categoryName, enum in CategoryEnums do
+			local items = raffledItems[categoryName]
 			local stock = StockService:GetStockFromRarity(enum, rarity)
 			local added: boolean = false
 			for _, item in stock do
@@ -158,7 +194,7 @@ function StockService:CreateItemsStock(): ()
 				local roll: number = random:NextNumber()
 				Debug.print(
 					"StockService:CreateItemsStock - ItemRoll",
-					category,
+					categoryName,
 					"Item:",
 					item.Name,
 					"Odd:",
@@ -169,18 +205,18 @@ function StockService:CreateItemsStock(): ()
 				if roll <= odd then
 					added = true
 					table.insert(items, item)
-					Debug.print("StockService:CreateItemsStock - ItemSelected", category, "Item:", item.Name)
+					Debug.print("StockService:CreateItemsStock - ItemSelected", categoryName, "Item:", item.Name)
 				end
 			end
 			-- Se não tive saido nenhum, pega o item de maior sorte
 			if not added then
 				table.insert(items, stock[1])
 				if stock[1] then
-					Debug.print("StockService:CreateItemsStock - ItemFallback", category, "Item:", stock[1].Name)
+					Debug.print("StockService:CreateItemsStock - ItemFallback", categoryName, "Item:", stock[1].Name)
 				else
 					Debug.print(
 						"StockService:CreateItemsStock - ItemFallback",
-						category,
+						categoryName,
 						"No items available for rarity",
 						rarity
 					)
@@ -189,12 +225,12 @@ function StockService:CreateItemsStock(): ()
 		end
 	end
 
-	for category, items in raffledItems do
+	for categoryName, items in raffledItems do
 		for _, item in items do
 			local quantity: number = random:NextInteger(item.Stock.Min, item.Stock.Max)
 			Debug.print(
 				"StockService:CreateItemsStock - QuantityRoll",
-				category,
+				categoryName,
 				"Item:",
 				item.Name,
 				"Min:",
@@ -204,7 +240,7 @@ function StockService:CreateItemsStock(): ()
 				"Quantity:",
 				quantity
 			)
-			GlobalStock[category][item.Name] = quantity
+			GlobalStock[categoryName][item.Name] = quantity
 		end
 	end
 end
