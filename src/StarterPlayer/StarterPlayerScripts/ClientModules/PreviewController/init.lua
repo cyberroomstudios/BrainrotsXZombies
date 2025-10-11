@@ -24,6 +24,7 @@ local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.Clien
 local blocks = require(ReplicatedStorage.Enums.blocks)
 local melee = require(ReplicatedStorage.Enums.melee)
 local ranged = require(ReplicatedStorage.Enums.ranged)
+local spikes = require(ReplicatedStorage.Enums.spikes)
 
 local currentItemName = ""
 local currenItemType = ""
@@ -32,6 +33,7 @@ local itemsEnum = {
 	["BLOCK"] = blocks,
 	["MELEE"] = melee,
 	["RANGED"] = ranged,
+	["SPIKES"] = spikes,
 }
 
 function PreviewController:Init()
@@ -54,7 +56,7 @@ function PreviewController:InitButtonListerns()
 
 				local detector = Instance.new("Part")
 				detector.Size = regionSize
-			detector.CFrame = CFrame.new(previewPos.X, 6.25, previewPos.Z)
+				detector.CFrame = CFrame.new(previewPos.X, 6.25, previewPos.Z)
 				detector.Anchored = true
 				detector.CanCollide = true -- precisa ser true para GetTouchingParts
 				detector.Transparency = 1
@@ -114,6 +116,7 @@ function PreviewController:GetItemFromTypeAndName(unitType: string, unitName: st
 		["MELEE"] = unitsFolder.melee,
 		["RANGED"] = unitsFolder.ranged,
 		["TRAP"] = unitsFolder.trap,
+		["SPIKES"] = unitsFolder.spikes,
 	}
 
 	if items[unitType] then
