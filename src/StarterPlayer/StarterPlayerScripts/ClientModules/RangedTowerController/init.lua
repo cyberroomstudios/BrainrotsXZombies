@@ -38,17 +38,17 @@ function RangedTowerController:LookAt(model: Model, targetPos: Vector3)
 	local _, yRot, _ = lookCF:ToOrientation()
 	local _, currentY, _ = primary.CFrame:ToOrientation()
 
-	local newCF = CFrame.new(pos) * CFrame.Angles(0, yRot, 0) 
+	local newCF = CFrame.new(pos) * CFrame.Angles(0, yRot, 0)
 	model:SetPrimaryPartCFrame(newCF)
 end
 
-function RangedTowerController:GetOrCreateBeam(model: Model)
+function RangedTowerController:GetOrCreateBeam(model: Model, hitRef)
 	local head = model:WaitForChild("Head")
-	local hitRef = head:WaitForChild("hitRef")
 	local primary = model.PrimaryPart
 
-	local beam = primary:FindFirstChild("Beam")
+	local beam = hitRef:FindFirstChild("Beam")
 	if not beam then
+		print("Criando Beam!")
 		local a0 = RangedTowerController:GetOrCreateAttachment(hitRef, "A0")
 
 		beam = Instance.new("Beam")
@@ -61,7 +61,7 @@ function RangedTowerController:GetOrCreateBeam(model: Model)
 		beam.FaceCamera = true
 		beam.Enabled = false
 		beam.Attachment0 = a0
-		beam.Parent = primary
+		beam.Parent = hitRef
 	end
 
 	return beam
@@ -77,14 +77,14 @@ function RangedTowerController:GetOrCreateAttachment(part: BasePart, name: strin
 	return att
 end
 
-function RangedTowerController:Attack(model: Model, enemy: Model)
+function RangedTowerController:Attack(model: Model, enemy: Model, hitRef)
 	local now = os.clock()
 	if rangedCooldowns[model] and now - rangedCooldowns[model] < ATTACK_COOLDOWN then
 		return
 	end
 	rangedCooldowns[model] = now
 
-	local beam = RangedTowerController:GetOrCreateBeam(model)
+	local beam = RangedTowerController:GetOrCreateBeam(model, hitRef)
 	local a1 = RangedTowerController:GetOrCreateAttachment(enemy.PrimaryPart, "A1")
 
 	beam.Attachment1 = a1
@@ -136,7 +136,7 @@ function RangedTowerController:GetPartsInRegion(meleesModek: Model, overlapParam
 	return parts
 end
 
-function RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion)
+function RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, hitRefModel)
 	for _, part in partsInRegion do
 		local ancestor = part:FindFirstAncestorOfClass("Model")
 		if ancestor and ancestor:GetAttribute("IS_ENEMY") then
@@ -153,7 +153,11 @@ function RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, par
 					humanoidCooldowns[humanoid] = now
 
 					RangedTowerController:LookAt(model.Head, ancestor.PrimaryPart.Position)
-					RangedTowerController:Attack(model, ancestor)
+
+					print(hitRefModel[model])
+					for _, hit in hitRefModel[model] do
+						RangedTowerController:Attack(model, ancestor, hit)
+					end
 				end
 				break
 			end
@@ -167,6 +171,9 @@ function RangedTowerController:StartThread()
 	-- Armazena as regiões de verificação
 	local regionCache = {}
 
+	-- Armazena as part de hitRef
+	local hitRefModel = {}
+
 	-- Params para a busca de inimigos
 	local overlapParams = OverlapParams.new()
 	overlapParams.FilterType = Enum.RaycastFilterType.Exclude
@@ -178,6 +185,17 @@ function RangedTowerController:StartThread()
 	for _, value in allrangedModeList do
 		if not value:GetAttribute("IS_BRAINROT") then
 			table.insert(rangedModeList, value)
+
+			local hitRefs = {}
+
+			-- Procura todas as hitRef
+			for _, child in value:WaitForChild("Head"):GetChildren() do
+				if child.Name == "hitRef" then
+					table.insert(hitRefs, child)
+				end
+			end
+
+			hitRefModel[value] = hitRefs
 		end
 	end
 	if next(rangedModeList) then
@@ -201,7 +219,7 @@ function RangedTowerController:StartThread()
 
 				local partsInRegion = RangedTowerController:GetPartsInRegion(model, overlapParams, regionSize)
 
-				RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion)
+				RangedTowerController:VerifyPartsInRegion(model, humanoidCooldowns, partsInRegion, hitRefModel)
 			end
 		end)
 	end
