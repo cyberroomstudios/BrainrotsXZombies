@@ -1,139 +1,249 @@
 local BaseStoreScreenController = {}
 
--- Init Bridg Net
+-- === SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Players = game:GetService("Players")
+-- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
 local bridge = BridgeNet2.ReferenceBridge("StockService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
 local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
--- End Bridg Net
-local Players = game:GetService("Players")
-local player = Players.LocalPlayer
+-- End Bridge Net
 
+-- === MODULES
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
-local blocks = require(ReplicatedStorage.Enums.blocks)
 
-local screen
-local timeRestockTextLabel
-local blocksContainer
-local selectedItem = nil
+-- === ENUMS
+local Blocks = require(ReplicatedStorage.Enums.blocks)
+local Melee = require(ReplicatedStorage.Enums.melee)
+local Ranged = require(ReplicatedStorage.Enums.ranged)
 
-function BaseStoreScreenController:Init()
+local CATEGORY_CONFIG: {
+	[string]: {
+		Enum: table,
+		Type: string,
+		ContainerTag: string,
+		Container: ScrollingFrame?,
+		Buttons: Frame?,
+		TabButtonTag: string,
+		TabButton: TextButton?,
+	},
+} =
+	{
+		Blocks = {
+			Enum = Blocks,
+			Type = "BLOCK",
+			ContainerTag = "BLOCKS_CONTAINER",
+			TabButtonTag = "BASE_SHOP_BLOCKS_TAB_BUTTON",
+		},
+		Melee = {
+			Enum = Melee,
+			Type = "MELEE",
+			ContainerTag = "MELEE_CONTAINER",
+			TabButtonTag = "BASE_SHOP_MELEE_TAB_BUTTON",
+		},
+		Ranged = {
+			Enum = Ranged,
+			Type = "RANGED",
+			ContainerTag = "RANGED_CONTAINER",
+			TabButtonTag = "BASE_SHOP_RANGED_TAB_BUTTON",
+		},
+	}
+
+-- === LOCAL VARIABLES
+local Screen: Frame
+local TimeRestockTextLabel: TextLabel
+local SelectedItem: table? = nil
+local RestockAllButton: TextButton
+local CloseButton: TextButton
+
+-- === GLOBAL FUNCTIONS
+function BaseStoreScreenController:Init(): ()
 	BaseStoreScreenController:CreateReferences()
-	BaseStoreScreenController:ConfigureProximity()
+	BaseStoreScreenController:ConfigureProximityPrompt()
 	BaseStoreScreenController:InitAttributeListener()
 	BaseStoreScreenController:CreateButtonListeners()
 end
 
-function BaseStoreScreenController:CreateReferences()
-	screen = UIReferences:GetReference("BASE_SHOP_SCREEN")
-	timeRestockTextLabel = UIReferences:GetReference("BASE_STORE_TIME_TEXTLABEL")
-	blocksContainer = UIReferences:GetReference("BLOCKS_CONTAINER")
-end
-
-function BaseStoreScreenController:ClearScreen()
-	for _, value in blocksContainer:GetChildren() do
-		if (not value:IsA("UIListLayout")) and not value.Name == "BUTTONS" then
-			value:Destroy()
+function BaseStoreScreenController:CreateReferences(): ()
+	Screen = UIReferences:GetReference("BASE_SHOP_SCREEN")
+	TimeRestockTextLabel = UIReferences:GetReference("BASE_STORE_TIME_TEXTLABEL")
+	RestockAllButton = UIReferences:GetReference("BASE_SHOP_RESTOCK_BUTTON")
+	CloseButton = UIReferences:GetReference("BASE_SHOP_CLOSE_BUTTON")
+	for categoryName, config in pairs(CATEGORY_CONFIG) do
+		local container = UIReferences:GetReference(config.ContainerTag)
+		config.Container = container
+		if container then
+			config.Buttons = container:FindFirstChild("BUTTONS")
+			if config.Buttons then
+				config.Buttons.Visible = false
+			else
+				error("Container doesn't have BUTTONS child for category " .. categoryName)
+			end
+		else
+			error("Container not found for category " .. categoryName)
+		end
+		local tabButton = UIReferences:GetReference(config.TabButtonTag)
+		config.TabButton = tabButton
+		if not tabButton then
+			error("Tab button not found for category " .. categoryName)
 		end
 	end
 end
 
-function BaseStoreScreenController:CreateButtonListeners()
-	local buttonFrame = blocksContainer.BUTTONS
-	local buyButton = buttonFrame.Buy
-	local robuxButton = buttonFrame.Robux
-	local restockButton = buttonFrame.Restock
-
-	buyButton.MouseButton1Click:Connect(function()
-		print(selectedItem)
-		local result = bridge:InvokeServerAsync({
-			[actionIdentifier] = "BuyItem",
-			data = {
-				Item = selectedItem,
-			},
-		})
-	end)
-
-	robuxButton.MouseButton1Click:Connect(function()
-		print("Robux")
-	end)
-
-	restockButton.MouseButton1Click:Connect(function()
-		print("Restock")
-	end)
+function BaseStoreScreenController:ClearScreen(): ()
+	SelectedItem = nil
+	for _, config in pairs(CATEGORY_CONFIG) do
+		for _, child in config.Container:GetChildren() do
+			if (not child:IsA("UIListLayout")) and child.Name ~= "BUTTONS" then
+				child:Destroy()
+			end
+		end
+		config.Buttons.Visible = false
+	end
 end
-function BaseStoreScreenController:ConfigureProximity()
+
+function BaseStoreScreenController:CreateButtonListeners(): ()
+	RestockAllButton.MouseButton1Click:Connect(function(): ()
+		print("Restock all")
+	end)
+
+	CloseButton.MouseButton1Click:Connect(function(): ()
+		BaseStoreScreenController:Close()
+	end)
+
+	for _, config in pairs(CATEGORY_CONFIG) do
+		local buttons = config.Buttons
+		local buyButton = buttons:FindFirstChild("Buy")
+		local robuxButton = buttons:FindFirstChild("Robux")
+		local restockButton = buttons:FindFirstChild("Restock")
+
+		if buyButton and buyButton:IsA("GuiButton") then
+			buyButton.MouseButton1Click:Connect(function()
+				if not SelectedItem then
+					return
+				end
+				if SelectedItem.Type ~= config.Type then
+					return
+				end
+				bridge:InvokeServerAsync({
+					[actionIdentifier] = "BuyItem",
+					data = {
+						Item = SelectedItem,
+					},
+				})
+			end)
+		end
+
+		if robuxButton and robuxButton:IsA("GuiButton") then
+			robuxButton.MouseButton1Click:Connect(function()
+				print("Robux purchase flow not implemented for " .. config.Type)
+			end)
+		end
+
+		if restockButton and restockButton:IsA("GuiButton") then
+			restockButton.MouseButton1Click:Connect(function()
+				print("Restock requested for " .. config.Type)
+			end)
+		end
+
+		local tabButton = config.TabButton
+		if tabButton and tabButton:IsA("GuiButton") then
+			tabButton.MouseButton1Click:Connect(function()
+				for _, otherConfig in pairs(CATEGORY_CONFIG) do
+					otherConfig.Container.Visible = false
+				end
+				config.Container.Visible = true
+			end)
+		end
+	end
+end
+
+function BaseStoreScreenController:ConfigureProximityPrompt(): ()
 	local proximityPart = ClientUtil:WaitForDescendants(workspace, "map", "stores", "base", "store", "ProximityPart")
 	local proximityPrompt = proximityPart.ProximityPrompt
 
-	proximityPrompt.PromptShown:Connect(function()
+	proximityPrompt.PromptShown:Connect(function(): ()
 		BaseStoreScreenController:ClearScreen()
 		BaseStoreScreenController:Open()
 		local result = bridge:InvokeServerAsync({
 			[actionIdentifier] = "GetStock",
 		})
-
-		BaseStoreScreenController:BuildBlocks(result.Blocks)
+		BaseStoreScreenController:BuildCategories(result)
 	end)
 
-	proximityPrompt.PromptHidden:Connect(function()
+	proximityPrompt.PromptHidden:Connect(function(): ()
 		BaseStoreScreenController:Close()
 	end)
 end
 
-function BaseStoreScreenController:Open()
-	screen.Visible = true
+function BaseStoreScreenController:Open(): ()
+	Screen.Visible = true
 end
 
-function BaseStoreScreenController:Close()
-	screen.Visible = false
+function BaseStoreScreenController:Close(): ()
+	Screen.Visible = false
 end
 
-function BaseStoreScreenController:InitAttributeListener()
+function BaseStoreScreenController:InitAttributeListener(): ()
 	workspace:GetAttributeChangedSignal("TIME_TO_RELOAD_RESTOCK"):Connect(function()
 		local leftTime = workspace:GetAttribute("TIME_TO_RELOAD_RESTOCK")
-		timeRestockTextLabel.Text = "Shop Restock In:" .. ClientUtil:FormatSecondsToMinutes(leftTime)
+		TimeRestockTextLabel.Text = "Shop Restock In:" .. ClientUtil:FormatSecondsToMinutes(leftTime)
 	end)
 end
 
-function BaseStoreScreenController:BuildBlocks(blocksList)
+function BaseStoreScreenController:BuildCategories(stockByCategory: table): ()
+	if not stockByCategory then
+		return
+	end
+
+	for categoryName, _ in pairs(CATEGORY_CONFIG) do
+		BaseStoreScreenController:BuildCategoryItems(categoryName, stockByCategory[categoryName])
+	end
+end
+
+function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stockList: table?): ()
+	local config = CATEGORY_CONFIG[categoryName]
+	local container = config.Container
+	local enum = config.Enum
 	local itemsFolder = ReplicatedStorage.GUI.Shop.Items
 
-	for index, value in blocksList do
-		local blockInfo = blocks[index]
+	for itemName, _ in stockList do
+		local itemInfo = enum[itemName]
 
-		if blockInfo then
-			local newItem = itemsFolder[blockInfo.Rarity]:Clone()
+		if itemInfo then
+			local template = itemsFolder[itemInfo.Rarity]
+			if template then
+				local newItem = template:Clone()
 
-			newItem.Content.MainInfos.ItemName.Text = blockInfo.GUI.Name
-			newItem.Content.MainInfos.Desc.Text = blockInfo.GUI.Description
-			newItem.Content.MainInfos.Price.Text = ClientUtil:FormatToUSD(blockInfo.Price)
+				newItem.Content.MainInfos.ItemName.Text = itemInfo.GUI.Name
+				newItem.Content.MainInfos.Desc.Text = itemInfo.GUI.Description
+				newItem.Content.MainInfos.Price.Text = ClientUtil:FormatToUSD(itemInfo.Price)
 
-			newItem.Name = index
-			newItem.LayoutOrder = blockInfo.GUI.Order
-			newItem.Parent = blocksContainer
+				newItem.Name = itemName
+				newItem.LayoutOrder = itemInfo.GUI.Order
+				newItem.Parent = container
 
-			newItem.MouseButton1Click:Connect(function()
-				local currentLayoutOrder = newItem.LayoutOrder
-				selectedItem = {
-					Type = "BLOCK",
-					Name = index,
-				}
-				for _, item in blocksContainer:GetChildren() do
-					if not item:IsA("UIListLayout") then
-						if item.LayoutOrder > currentLayoutOrder then
-							item.LayoutOrder = item.LayoutOrder + 1
+				newItem.MouseButton1Click:Connect(function()
+					SelectedItem = {
+						Type = config.Type,
+						Name = itemName,
+					}
+
+					for _, child in container:GetChildren() do
+						if child ~= config.Buttons and not child:IsA("UIListLayout") then
+							if child.LayoutOrder > newItem.LayoutOrder then
+								child.LayoutOrder += 1
+							end
 						end
 					end
-				end
 
-				blocksContainer.BUTTONS.Visible = true
-				blocksContainer.BUTTONS.LayoutOrder = currentLayoutOrder + 1
-			end)
+					config.Buttons.LayoutOrder = newItem.LayoutOrder + 1
+				end)
+			end
 		end
 	end
 end

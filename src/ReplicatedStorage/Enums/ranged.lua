@@ -15,8 +15,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Tower Level 1",
+			Description = "Deploy Tower Level 1 to guard the perimeter.",
 			Order = 1,
 		},
 		Stock = {
@@ -24,6 +24,7 @@ local Ranged = table.freeze({
 			Max = 5,
 		},
 	},
+
 	["TowerLevel2"] = {
 		Name = "TowerLevel2",
 		IsBrainrot = false,
@@ -38,8 +39,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Tower Level 2",
+			Description = "Upgrade to Tower Level 2 for stronger defense.",
 			Order = 1,
 		},
 		Stock = {
@@ -47,6 +48,7 @@ local Ranged = table.freeze({
 			Max = 5,
 		},
 	},
+
 	["TowerLevel3"] = {
 		Name = "TowerLevel3",
 		IsBrainrot = false,
@@ -61,8 +63,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Tower Level 3",
+			Description = "Tower Level 3 keeps zombies at bay from afar.",
 			Order = 1,
 		},
 		Stock = {
@@ -85,8 +87,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Tower Level 4",
+			Description = "Tower Level 4 dominates long-range battles.",
 			Order = 1,
 		},
 		Stock = {
@@ -94,6 +96,7 @@ local Ranged = table.freeze({
 			Max = 5,
 		},
 	},
+
 	["bobritoBandito"] = {
 		Name = "bobritoBandito",
 		IsBrainrot = true,
@@ -108,8 +111,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Bobrito Bandito",
+			Description = "Let Bobrito Bandito rain explosive shots.",
 			Order = 1,
 		},
 		Stock = {
@@ -132,8 +135,8 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Noobini",
+			Description = "Station Noobini to slow enemies with precise shots.",
 			Order = 1,
 		},
 		Stock = {

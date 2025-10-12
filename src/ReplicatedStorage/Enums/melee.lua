@@ -17,8 +17,8 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 5,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Cappuccino Assassino",
+			Description = "Unleash the Cappuccino Assassino for rapid melee strikes.",
 			Order = 1,
 		},
 		Stock = {
@@ -26,6 +26,7 @@ local Melee = table.freeze({
 			Max = 5,
 		},
 	},
+
 	["tungTungSahur"] = {
 		Name = "tungTungSahur",
 		Life = 100,
@@ -41,8 +42,8 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 1,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Tung Tung Sahur",
+			Description = "Summon Tung Tung Sahur to stagger nearby foes.",
 			Order = 1,
 		},
 		Stock = {
@@ -66,8 +67,8 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 5,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Odin",
+			Description = "Command Odin to cleave through enemy lines.",
 			Order = 1,
 		},
 		Stock = {
