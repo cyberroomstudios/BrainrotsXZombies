@@ -162,6 +162,8 @@ local Ranged = table.freeze({
 		IsBrainrot = true,
 		Life = 100,
 		Price = 1000,
+		ProductId = 3429394560,
+		RestockProductId = 3429394899,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		DetectionRange = {
@@ -171,9 +173,9 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
-			Order = 1,
+			Name = "Tralalero Tralala",
+			Description = "Field Tralalero Tralala to ricochet shots through the horde.",
+			Order = 7,
 		},
 		Stock = {
 			Min = 1,
@@ -186,6 +188,8 @@ local Ranged = table.freeze({
 		IsBrainrot = true,
 		Life = 100,
 		Price = 1000,
+		ProductId = 3429395053,
+		RestockProductId = 3429395158,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		DetectionRange = {
@@ -195,17 +199,15 @@ local Ranged = table.freeze({
 			NumberOfStudsRight = 10,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
-			Order = 1,
+			Name = "Bombardino Crocodilo",
+			Description = "Deploy Bombardino Crocodilo to bombard enemies with explosive arcs.",
+			Order = 8,
 		},
 		Stock = {
 			Min = 1,
 			Max = 5,
 		},
 	},
-
-	
 })
 
 return Ranged

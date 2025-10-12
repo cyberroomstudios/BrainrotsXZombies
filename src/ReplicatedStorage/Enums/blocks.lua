@@ -1,6 +1,7 @@
 --LIGHTINING
 
 local Blocks = table.freeze({
+
 	["blue"] = {
 		Name = "blue",
 		Life = 100,
