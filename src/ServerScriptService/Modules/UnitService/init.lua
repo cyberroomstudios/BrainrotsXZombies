@@ -65,9 +65,13 @@ function UnitService:Give(player: Player, unitName: string, unitType: string)
 		table.insert(current, data)
 		return current
 	end)
+	print(
+		`[UnitService] Given unit {unitName} to player {player.Name}. Backpack: `,
+		PlayerDataHandler:Get(player, "unitsBackpack")
+	)
 end
 
-function UnitService:Consome(player: Player, unitName: string, unitType: string)
+function UnitService:Consume(player: Player, unitName: string, unitType: string)
 	local unitTypesMap = {
 		["BLOCK"] = blocks,
 	}

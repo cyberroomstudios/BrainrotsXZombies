@@ -44,13 +44,13 @@ function StartGameService:InitBridgeListener()
 
 			MapService:InitMapFromPlayer(player)
 
-			 StartGameService:InitPlayerAtributes(player)
+			StartGameService:InitPlayerAtributes(player)
 
 			StartGameService:CreatePlayerAttributes(player)
 			--	UnitService:Give(player, "TowerLevel1", "RANGED")
 			--	UnitService:Give(player, "TowerLevel2", "RANGED")
 			--	UnitService:Give(player, "TowerLevel3", "RANGED")
-			UnitService:Give(player, "TowerLevel4", "RANGED")
+			-- UnitService:Give(player, "TowerLevel4", "RANGED")
 
 			--	UnitService:Give(player, "cappuccinoAssassino", "MELEE")
 			--			UnitService:Give(player, "tungTungSahur", "MELEE")
@@ -101,12 +101,10 @@ function StartGameService:CreatePlayerAttributes(player: Player)
 	end
 end
 
-
 function StartGameService:InitPlayerAtributes(player: Player)
 	-- Inicializando o Dinheiro
 	local money = PlayerDataHandler:Get(player, "money")
 	player:SetAttribute("MONEY", money)
-
 end
 
 return StartGameService

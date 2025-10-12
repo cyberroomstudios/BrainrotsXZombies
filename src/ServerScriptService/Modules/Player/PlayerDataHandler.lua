@@ -32,6 +32,7 @@ local dataTemplate = {
 	itemOnMapId = 0,
 	unitsBackpack = {},
 	money = 0,
+	restockCycle = 0,
 }
 
 local ProfileService = require(ServerScriptService.libs.ProfileService)
