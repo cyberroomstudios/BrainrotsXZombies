@@ -1,4 +1,4 @@
-local Wave1 = table.freeze({
+local Cycle2 = table.freeze({
 
 	[1] = {
 		AmountBase = 1,
@@ -195,4 +195,4 @@ local Wave1 = table.freeze({
 	[25] = {},
 })
 
-return Wave1
+return Cycle2

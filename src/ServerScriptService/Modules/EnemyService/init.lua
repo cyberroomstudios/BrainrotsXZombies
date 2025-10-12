@@ -11,8 +11,10 @@ local MapService = require(ServerScriptService.Modules.MapService)
 local Utility = ReplicatedStorage:WaitForChild("Utility")
 local BridgeNet2 = require(Utility.BridgeNet2)
 local enemy = require(ReplicatedStorage.Enums.enemy)
+
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
+local WaveService = nil
 
 local ENEMY_STOP_DISTANCE = 0
 local animationAttackTrack = {}
@@ -48,7 +50,7 @@ function EnemyService:Warmup()
 	end)
 end
 
-function EnemyService:SpawnEnemy(player: Player, currentWave: number)
+function EnemyService:SpawnEnemy(player: Player, enemyType: string)
 	local base = BaseService:GetBase(player)
 	if not base then
 		return
@@ -62,14 +64,12 @@ function EnemyService:SpawnEnemy(player: Player, currentWave: number)
 
 	local oldSpawn
 
-	for i = 1, currentWave do
-		task.spawn(function()
-			local enemySpawn = enemySpawns[math.random(1, 3)]
+	task.spawn(function()
+		local enemySpawn = enemySpawns[math.random(1, 3)]
 
-			oldSpawn = enemySpawn
-			EnemyService:Create(player, enemySpawn, "Tank")
-		end)
-	end
+		oldSpawn = enemySpawn
+		EnemyService:Create(player, enemySpawn, enemyType)
+	end)
 end
 
 function EnemyService:Create(player: Player, enemySpawn: Part, enemyType: string)
@@ -236,9 +236,12 @@ end
 function EnemyService:ReportNewDied(player: Player)
 	local enemiesFolder = workspace.runtime[player.UserId].Enemys
 	if #enemiesFolder:GetChildren() == 0 then
-		local wave = (player:GetAttribute("CURRENT_WAVE") or 1) + 1
-		player:SetAttribute("CURRENT_WAVE", wave)
-		EnemyService:SpawnEnemy(player, wave)
+		if not WaveService then
+			WaveService = require(ServerScriptService.Modules.WaveService)
+		end
+		local nextWave = (player:GetAttribute("CURRENT_WAVE") or 1) + 1
+		local cycleNumber = player:GetAttribute("CURRENT_CYCLE")
+		WaveService:StartNewWave(player, cycleNumber, nextWave)
 	end
 end
 

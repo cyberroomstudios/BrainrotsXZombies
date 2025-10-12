@@ -15,6 +15,7 @@ local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local EnemyService = require(ServerScriptService.Modules.EnemyService)
 local ThreadService = require(ServerScriptService.Modules.ThreadService)
+local Cycle1 = require(ReplicatedStorage.Cycles.Cycle1)
 
 function WaveService:Init()
 	WaveService:InitBridgeListener()
@@ -40,9 +41,55 @@ function WaveService:StartWave(player: Player)
 
 	task.spawn(function()
 		player:SetAttribute("BASE_LIFE", 100)
-		player:SetAttribute("CURRENT_WAVE", 1)
-		EnemyService:SpawnEnemy(player, 1)
+		WaveService:StartNewWave(player, 1, 1)
 	end)
+end
+
+function WaveService:StartNewWave(player: Player, cycleNumber: number, waveNumber: number)
+	player:SetAttribute("CURRENT_CYCLE", cycleNumber)
+	player:SetAttribute("CURRENT_WAVE", waveNumber)
+
+	if cycleNumber == 1 then
+		local wave = Cycle1[waveNumber]
+
+		if not wave then
+			return
+		end
+
+		local amountBase = wave.AmountEnemies.Base
+		local amountTank = wave.AmountEnemies.Tank
+		local amountFast = wave.AmountEnemies.Fast
+		local amountElite = wave.AmountEnemies.Elite
+		local amountPlus = wave.AmountEnemies.Plus
+
+		for i = 1, amountBase do
+			EnemyService:SpawnEnemy(player, "Base")
+			task.wait(1)
+		end
+
+		for i = 1, amountTank do
+			EnemyService:SpawnEnemy(player, "Tank")
+			task.wait(1)
+		end
+
+		for i = 1, amountFast do
+			EnemyService:SpawnEnemy(player, "Fast")
+			task.wait(1)
+		end
+
+		for i = 1, amountElite do
+			EnemyService:SpawnEnemy(player, "Elite")
+			task.wait(1)
+		end
+
+		for i = 1, amountPlus do
+			EnemyService:SpawnEnemy(player, "Plus")
+			task.wait(1)
+		end
+	end
+
+	if cycleNumber == 2 then
+	end
 end
 
 return WaveService
