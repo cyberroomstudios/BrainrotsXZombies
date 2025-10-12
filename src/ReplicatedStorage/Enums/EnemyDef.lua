@@ -1,3 +1,0 @@
-local EnemyDef = {}
-
-return EnemyDef

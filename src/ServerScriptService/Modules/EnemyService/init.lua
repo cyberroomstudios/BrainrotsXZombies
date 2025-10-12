@@ -10,6 +10,7 @@ local MapService = require(ServerScriptService.Modules.MapService)
 
 local Utility = ReplicatedStorage:WaitForChild("Utility")
 local BridgeNet2 = require(Utility.BridgeNet2)
+local enemy = require(ReplicatedStorage.Enums.enemy)
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 
@@ -66,17 +67,32 @@ function EnemyService:SpawnEnemy(player: Player, currentWave: number)
 			local enemySpawn = enemySpawns[math.random(1, 3)]
 
 			oldSpawn = enemySpawn
-			EnemyService:Create(player, enemySpawn)
+			EnemyService:Create(player, enemySpawn, "Tank")
 		end)
 	end
 end
 
-function EnemyService:Create(player: Player, enemySpawn: Part)
+function EnemyService:Create(player: Player, enemySpawn: Part, enemyType: string)
 	task.spawn(function()
-		local createStart = os.clock()
-		local newEnemy = ReplicatedStorage.Model.Enemy.Zombie:Clone()
+		if not enemy[enemyType] then
+			warn("Enemy not found: " .. enemyType)
+			return
+		end
+
+		local enemiesFolder = ReplicatedStorage.developer.enemies
+
+		if not enemiesFolder:FindFirstChild(enemyType) then
+			warn("Enemy not found in Replicated Storage: " .. enemyType)
+			return
+		end
+
+		local newEnemy = enemiesFolder:FindFirstChild(enemyType):Clone()
 		local hrp = newEnemy:WaitForChild("HumanoidRootPart")
 		local humanoid = newEnemy:WaitForChild("Humanoid")
+
+		humanoid.MaxHealth = enemy[enemyType].Hp
+		humanoid.Health = enemy[enemyType].Hp
+		humanoid.WalkSpeed = 7 * enemy[enemyType].Speed
 
 		newEnemy:SetAttribute("IS_ENEMY", true)
 		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
@@ -97,8 +113,6 @@ function EnemyService:Create(player: Player, enemySpawn: Part)
 				EnemyService:StartAttackThread(player, newEnemy)
 			end
 		end)
-
-		print(string.format("[EnemyService] Enemy criado em %.3fs", os.clock() - createStart))
 	end)
 end
 
