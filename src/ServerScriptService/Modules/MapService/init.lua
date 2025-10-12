@@ -43,6 +43,7 @@ function MapService:GetItemFromTypeAndName(unitType: string, unitName: string)
 		["MELEE"] = unitsFolder.melee,
 		["RANGED"] = unitsFolder.ranged,
 		["TRAP"] = unitsFolder.trap,
+		["SPIKES"] = unitsFolder.spikes,
 	}
 
 	if items[unitType] then
@@ -62,7 +63,6 @@ function MapService:SetItemOnMap(
 	subSlot: number,
 	isBrainrot: boolean
 )
-
 	local base = BaseService:GetBase(player)
 	local initBaserefPosition = BaseService:GetInitBaseRefPosition(player)
 	if base then

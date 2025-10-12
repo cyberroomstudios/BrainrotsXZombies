@@ -44,23 +44,29 @@ function StartGameService:InitBridgeListener()
 
 			MapService:InitMapFromPlayer(player)
 
-			 StartGameService:InitPlayerAtributes(player)
+			StartGameService:InitPlayerAtributes(player)
 
 			StartGameService:CreatePlayerAttributes(player)
-			--	UnitService:Give(player, "TowerLevel1", "RANGED")
-			--	UnitService:Give(player, "TowerLevel2", "RANGED")
-			--	UnitService:Give(player, "TowerLevel3", "RANGED")
-			UnitService:Give(player, "TowerLevel4", "RANGED")
+--			UnitService:Give(player, "blue", "BLOCK")
+--			UnitService:Give(player, "orange", "BLOCK")
+--			UnitService:Give(player, "yellow", "BLOCK")
 
-			--	UnitService:Give(player, "cappuccinoAssassino", "MELEE")
-			--			UnitService:Give(player, "tungTungSahur", "MELEE")
-			--			UnitService:Give(player, "odin", "MELEE")
+--			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
+--			UnitService:Give(player, "tungTungSahur", "MELEE")
+--			UnitService:Give(player, "odin", "MELEE")
+			UnitService:Give(player, "Lirili", "MELEE")
 
-			--			UnitService:Give(player, "Tower1", "RANGED")
-			--	UnitService:Give(player, "bobritoBandito", "RANGED")
-			--	UnitService:Give(player, "Noobini", "RANGED")
+--			UnitService:Give(player, "TowerLevel1", "RANGED")
+--			UnitService:Give(player, "TowerLevel2", "RANGED")
+--			UnitService:Give(player, "TowerLevel3", "RANGED")
+--			UnitService:Give(player, "TowerLevel4", "RANGED")
+--			UnitService:Give(player, "bobritoBandito", "RANGED")
+--			UnitService:Give(player, "Noobini", "RANGED")
+--			UnitService:Give(player, "bobritoBandito", "RANGED")
+--			UnitService:Give(player, "tralaleroTralala", "RANGED")
+--			UnitService:Give(player, "bombardinoCrocodilo", "RANGED")
 
-			--	UnitService:Give(player, "blue", "BLOCK")
+--			UnitService:Give(player, "SpikesLevel1", "SPIKES")
 		end
 	end
 end
@@ -80,6 +86,9 @@ function StartGameService:CreatePlayerFolder(player: Player)
 
 	local meleeUnitFolder = Instance.new("Folder", playerFolder)
 	meleeUnitFolder.Name = "MELEE"
+
+	local spikesUnitFolder = Instance.new("Folder", playerFolder)
+	spikesUnitFolder.Name = "SPIKES"
 end
 
 function StartGameService:CreatePlayerAttributes(player: Player)
@@ -101,12 +110,10 @@ function StartGameService:CreatePlayerAttributes(player: Player)
 	end
 end
 
-
 function StartGameService:InitPlayerAtributes(player: Player)
 	-- Inicializando o Dinheiro
 	local money = PlayerDataHandler:Get(player, "money")
 	player:SetAttribute("MONEY", money)
-
 end
 
 return StartGameService

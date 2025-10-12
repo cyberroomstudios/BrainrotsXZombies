@@ -8,14 +8,18 @@ local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataH
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
-local blocks = require(ReplicatedStorage.Enums.blocks)
-local melee = require(ReplicatedStorage.Enums.melee)
-local ranged = require(ReplicatedStorage.Enums.ranged)
+
 local bridge = BridgeNet2.ReferenceBridge("UnitService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
 local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- End Bridg Net
+
+local blocks = require(ReplicatedStorage.Enums.blocks)
+local melee = require(ReplicatedStorage.Enums.melee)
+local ranged = require(ReplicatedStorage.Enums.ranged)
+local spikes = require(ReplicatedStorage.Enums.spikes)
+
 
 function UnitService:Init()
 	UnitService:InitBridgeListener()
@@ -34,6 +38,7 @@ function UnitService:Give(player: Player, unitName: string, unitType: string)
 		["BLOCK"] = blocks,
 		["MELEE"] = melee,
 		["RANGED"] = ranged,
+		["SPIKES"] = spikes,
 	}
 
 	if not unitTypesMap[unitType] then
