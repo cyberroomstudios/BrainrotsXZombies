@@ -60,6 +60,13 @@ local SelectedItem: table? = nil
 local RestockAllButton: TextButton
 local CloseButton: TextButton
 
+-- === LOCAL FUNCTIONS
+local function refreshScrollingFrameCanvasSize(frame: ScrollingFrame): ()
+	local uiListLayout: UIListLayout = frame:FindFirstChildWhichIsA("UIListLayout")
+	frame.CanvasSize =
+		UDim2.new(0, 0, uiListLayout.Padding.Scale, uiListLayout.AbsoluteContentSize.Y + uiListLayout.Padding.Offset)
+end
+
 -- === GLOBAL FUNCTIONS
 function BaseStoreScreenController:Init(): ()
 	BaseStoreScreenController:CreateReferences()
@@ -157,6 +164,7 @@ function BaseStoreScreenController:CreateButtonListeners(): ()
 					otherConfig.Container.Visible = false
 				end
 				config.Container.Visible = true
+				refreshScrollingFrameCanvasSize(config.Container)
 			end)
 		end
 	end
@@ -246,6 +254,8 @@ function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stoc
 			end
 		end
 	end
+
+	refreshScrollingFrameCanvasSize(config.Container)
 end
 
 return BaseStoreScreenController
