@@ -12,8 +12,13 @@ export type ItemStock = {
 export type Item = {
 	Name: string,
 	Price: number,
+	ProductId: number,
+	ProductPrice: number?,
+	RestockProductId: number,
+	RestockProductPrice: number?,
 	Rarity: string,
 	Odd: number,
+	IsBrainrot: boolean,
 	GUI: ItemGUI,
 	Stock: ItemStock,
 }
@@ -26,7 +31,7 @@ export type Block = {
 	[string]: BlockItem,
 }
 
-export type MeleeDetectionRange = {
+export type DetectionRange = {
 	NumberOfStudsForward: number,
 	NumberOfStudsBehind: number,
 	NumberOfStudsLeft: number,
@@ -35,7 +40,7 @@ export type MeleeDetectionRange = {
 
 export type MeleeItem = Item & {
 	Life: number,
-	DetectionRange: MeleeDetectionRange,
+	DetectionRange: DetectionRange,
 }
 
 export type Melee = {
@@ -48,6 +53,7 @@ export type RangedItem = Item & {
 
 export type Ranged = {
 	[string]: RangedItem,
+	DetectionRange: DetectionRange,
 }
 
 export type UnitsRarityGUI = {

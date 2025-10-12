@@ -6,10 +6,11 @@ local Melee = table.freeze({
 		Name = "cappuccinoAssassino",
 		Life = 100,
 		Price = 1000,
+		ProductId = 3429149941,
+		RestockProductId = 3429157417,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		IsBrainrot = true,
-
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 5,
@@ -17,8 +18,8 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 5,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
+			Name = "Cappuccino Assassino",
+			Description = "Unleash the Cappuccino Assassino for rapid melee strikes.",
 			Order = 1,
 		},
 		Stock = {
@@ -26,14 +27,16 @@ local Melee = table.freeze({
 			Max = 5,
 		},
 	},
+
 	["tungTungSahur"] = {
 		Name = "tungTungSahur",
 		Life = 100,
 		Price = 1000,
+		ProductId = 3429150292,
+		RestockProductId = 3429180442,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		IsBrainrot = true,
-
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 0,
@@ -41,9 +44,9 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 1,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
-			Order = 1,
+			Name = "Tung Tung Sahur",
+			Description = "Summon Tung Tung Sahur to stagger nearby foes.",
+			Order = 2,
 		},
 		Stock = {
 			Min = 1,
@@ -55,10 +58,10 @@ local Melee = table.freeze({
 		Name = "odin",
 		Life = 100,
 		Price = 1000,
+		ProductId = 3429181014,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		IsBrainrot = true,
-
 		DetectionRange = {
 			NumberOfStudsForward = 5,
 			NumberOfStudsBehind = 2,
@@ -66,9 +69,9 @@ local Melee = table.freeze({
 			NumberOfStudsRight = 5,
 		},
 		GUI = {
-			Name = "Blue Block",
-			Description = "Defend Your Base With 100 XP",
-			Order = 1,
+			Name = "Odin",
+			Description = "Command Odin to cleave through enemy lines.",
+			Order = 3,
 		},
 		Stock = {
 			Min = 1,
