@@ -60,13 +60,6 @@ local SelectedItem: table? = nil
 local RestockAllButton: TextButton
 local CloseButton: TextButton
 
--- === LOCAL FUNCTIONS
-local function refreshScrollingFrameCanvasSize(frame: ScrollingFrame): ()
-	local uiListLayout: UIListLayout = frame:FindFirstChildWhichIsA("UIListLayout")
-	frame.CanvasSize =
-		UDim2.new(0, 0, uiListLayout.Padding.Scale, uiListLayout.AbsoluteContentSize.Y + uiListLayout.Padding.Offset)
-end
-
 -- === GLOBAL FUNCTIONS
 function BaseStoreScreenController:Init(): ()
 	BaseStoreScreenController:CreateReferences()
@@ -81,7 +74,7 @@ function BaseStoreScreenController:CreateReferences(): ()
 	RestockAllButton = UIReferences:GetReference("BASE_SHOP_RESTOCK_BUTTON")
 	CloseButton = UIReferences:GetReference("BASE_SHOP_CLOSE_BUTTON")
 	for categoryName, config in pairs(CATEGORY_CONFIG) do
-		local container = UIReferences:GetReference(config.ContainerTag)
+		local container: ScrollingFrame? = UIReferences:GetReference(config.ContainerTag)
 		config.Container = container
 		if container then
 			config.Buttons = container:FindFirstChild("BUTTONS")
@@ -89,6 +82,26 @@ function BaseStoreScreenController:CreateReferences(): ()
 				config.Buttons.Visible = false
 			else
 				error("Container doesn't have BUTTONS child for category " .. categoryName)
+			end
+
+			local uiListLayout: UIListLayout? = container:FindFirstChildWhichIsA("UIListLayout")
+			if uiListLayout then
+				local function refreshContainerCanvasSize(): ()
+					container.CanvasSize = UDim2.new(
+						0,
+						0,
+						uiListLayout.Padding.Scale,
+						uiListLayout.AbsoluteContentSize.Y + uiListLayout.Padding.Offset
+					)
+				end
+				refreshContainerCanvasSize()
+				uiListLayout.Changed:Connect(function(property: string): ()
+					if property == "AbsoluteContentSize" then
+						refreshContainerCanvasSize()
+					end
+				end)
+			else
+				error("Container doesn't have UIListLayout child for category " .. categoryName)
 			end
 		else
 			error("Container not found for category " .. categoryName)
@@ -164,7 +177,6 @@ function BaseStoreScreenController:CreateButtonListeners(): ()
 					otherConfig.Container.Visible = false
 				end
 				config.Container.Visible = true
-				refreshScrollingFrameCanvasSize(config.Container)
 			end)
 		end
 	end
@@ -235,7 +247,7 @@ function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stoc
 				newItem.LayoutOrder = itemInfo.GUI.Order
 				newItem.Parent = container
 
-				newItem.MouseButton1Click:Connect(function()
+				newItem.MouseButton1Click:Connect(function(): ()
 					SelectedItem = {
 						Type = config.Type,
 						Name = itemName,
@@ -250,12 +262,11 @@ function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stoc
 					end
 
 					config.Buttons.LayoutOrder = newItem.LayoutOrder + 1
+					config.Buttons.Visible = true
 				end)
 			end
 		end
 	end
-
-	refreshScrollingFrameCanvasSize(config.Container)
 end
 
 return BaseStoreScreenController

@@ -41,7 +41,7 @@ local Ranged = table.freeze({
 		GUI = {
 			Name = "Tower Level 2",
 			Description = "Upgrade to Tower Level 2 for stronger defense.",
-			Order = 1,
+			Order = 2,
 		},
 		Stock = {
 			Min = 1,
@@ -65,7 +65,7 @@ local Ranged = table.freeze({
 		GUI = {
 			Name = "Tower Level 3",
 			Description = "Tower Level 3 keeps zombies at bay from afar.",
-			Order = 1,
+			Order = 3,
 		},
 		Stock = {
 			Min = 1,
@@ -89,7 +89,7 @@ local Ranged = table.freeze({
 		GUI = {
 			Name = "Tower Level 4",
 			Description = "Tower Level 4 dominates long-range battles.",
-			Order = 1,
+			Order = 4,
 		},
 		Stock = {
 			Min = 1,
@@ -113,7 +113,7 @@ local Ranged = table.freeze({
 		GUI = {
 			Name = "Bobrito Bandito",
 			Description = "Let Bobrito Bandito rain explosive shots.",
-			Order = 1,
+			Order = 5,
 		},
 		Stock = {
 			Min = 1,
@@ -137,7 +137,7 @@ local Ranged = table.freeze({
 		GUI = {
 			Name = "Noobini",
 			Description = "Station Noobini to slow enemies with precise shots.",
-			Order = 1,
+			Order = 6,
 		},
 		Stock = {
 			Min = 1,

@@ -44,7 +44,7 @@ local Melee = table.freeze({
 		GUI = {
 			Name = "Tung Tung Sahur",
 			Description = "Summon Tung Tung Sahur to stagger nearby foes.",
-			Order = 1,
+			Order = 2,
 		},
 		Stock = {
 			Min = 1,
@@ -69,7 +69,7 @@ local Melee = table.freeze({
 		GUI = {
 			Name = "Odin",
 			Description = "Command Odin to cleave through enemy lines.",
-			Order = 1,
+			Order = 3,
 		},
 		Stock = {
 			Min = 1,
