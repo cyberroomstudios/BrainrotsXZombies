@@ -37,7 +37,7 @@ local CategoryEnums: { [string]: { [string]: ET.Item } } = {
 }
 
 -- === CONSTANTS
-local RESTOCK_ALL_PRODUCT_ID: number = 3429155085
+local RESTOCK_ALL_PRODUCT_ID: number = 3430856208
 local TIME_TO_RELOAD_STOCK: number = 300 -- 5 minutes
 local PURCHASE_ACTION_KIND: { [string]: string } = {
 	GrantItem = "GrantItem",
