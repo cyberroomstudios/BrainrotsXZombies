@@ -16,6 +16,7 @@ local UtilService = require(ServerScriptService.Modules.UtilService)
 local EnemyService = require(ServerScriptService.Modules.EnemyService)
 local ThreadService = require(ServerScriptService.Modules.ThreadService)
 local Cycle1 = require(ReplicatedStorage.Cycles.Cycle1)
+local MapService = require(ServerScriptService.Modules.MapService)
 
 function WaveService:Init()
 	WaveService:InitBridgeListener()
@@ -25,6 +26,10 @@ function WaveService:InitBridgeListener()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "StartWave" then
 			WaveService:StartWave(player)
+		end
+
+		if data[actionIdentifier] == "StopWave" then
+			WaveService:Stop(player)
 		end
 	end
 end
@@ -43,6 +48,12 @@ function WaveService:StartWave(player: Player)
 		player:SetAttribute("BASE_LIFE", 100)
 		WaveService:StartNewWave(player, 1, 1)
 	end)
+end
+
+function WaveService:Stop(player: Player)
+	player:SetAttribute("CURRENT_WAVE", 1)
+	player:SetAttribute("GAME_ON", false)
+	MapService:RestartBaseMap(player)
 end
 
 function WaveService:StartNewWave(player: Player, cycleNumber: number, waveNumber: number)

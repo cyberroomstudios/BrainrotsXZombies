@@ -13,6 +13,7 @@ local BridgeNet2 = require(Utility.BridgeNet2)
 local enemy = require(ReplicatedStorage.Enums.enemy)
 
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
+
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local WaveService = nil
 
@@ -197,13 +198,16 @@ function EnemyService:UpdateXpBar(model: Model)
 
 	local percent = current / hp
 
-	local billboardGui = model:WaitForChild("XP")
-	billboardGui.Main.Content.Size = UDim2.fromScale(percent, 1)
+	local billboardGui = model:FindFirstChild("XP")
+	if billboardGui then
+		billboardGui.Enabled = true
+		billboardGui.Main.Content.Size = UDim2.fromScale(percent, 1)
 
-	if percent <= 0.5 then
-		billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 0, 0) -- Vermelho
-	elseif percent <= 0.75 then
-		billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 1, 0) -- Amarelo
+		if percent <= 0.5 then
+			billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 0, 0) -- Vermelho
+		elseif percent <= 0.75 then
+			billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 1, 0) -- Amarelo
+		end
 	end
 end
 

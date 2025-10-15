@@ -101,7 +101,10 @@ function MapService:SetItemOnMap(
 		item:SetAttribute("HP", unitTypesEnums[unitType][unitName].HP)
 		item:SetAttribute("CURRENT_HP", unitTypesEnums[unitType][unitName].HP)
 		item.Parent = workspace.runtime[player.UserId][unitType]
-
+		
+		if item:FindFirstChild("XP") then
+			item:FindFirstChild("XP").Enabled = false
+		end
 		if isBrainrot then
 			-- Add animation if unit is Brainrot
 			-- Adiciona a animação se for brainrot

@@ -27,6 +27,12 @@ function WaveController:Start(player: Player)
 	})
 end
 
+function WaveController:Stop(player: Player)
+	local result = bridge:InvokeServerAsync({
+		[actionIdentifier] = "StopWave",
+		data = {},
+	})
+end
 function WaveController:CreateReferences()
 	-- Botões referentes aos Teleports
 	currentWaveText = UIReferences:GetReference("CURRENT_WAVE_TEXT")

@@ -45,7 +45,6 @@ end
 
 function HudController:InitButtonListerns()
 	storeButton.MouseButton1Click:Connect(function()
-		print("Click")
 		TeleportController:ToBaseStore()
 	end)
 
@@ -53,6 +52,9 @@ function HudController:InitButtonListerns()
 		TeleportController:ToBase()
 	end)
 
+	stopButton.MouseButton1Click:Connect(function()
+		WaveController:Stop(player)
+	end)
 	fightButton.MouseButton1Click:Connect(function()
 		WaveController:Start(player)
 		MeleeThreadController:StartThread()
