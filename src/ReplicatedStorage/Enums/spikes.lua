@@ -4,8 +4,9 @@ local Spikes = table.freeze({
 
 	["SpikesLevel1"] = {
 		Name = "SpikesLevel1",
-		Life = 100,
+		HP = 50,
 		Price = 1000,
+		Damege = 15,
 		Rarity = "COMMON",
 		Odd = 0.07,
 		IsBrainrot = false,

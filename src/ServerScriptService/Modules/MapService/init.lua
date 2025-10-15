@@ -9,6 +9,10 @@ local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataH
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local Debug = require(ReplicatedStorage.Utility.Debug)(script)
+local blocks = require(ReplicatedStorage.Enums.blocks)
+local melee = require(ReplicatedStorage.Enums.melee)
+local ranged = require(ReplicatedStorage.Enums.ranged)
+local spikes = require(ReplicatedStorage.Enums.spikes)
 
 -- === ENUMS
 local Blocks = require(ReplicatedStorage.Enums.blocks)
@@ -18,7 +22,14 @@ local CONTAINER_TYPES = { "BLOCK", "ENEMIES", "MELEE", "RANGED", "SPIKES" }
 -- === GLOBAL FUNCTIONS
 function MapService:Init(): () end
 
-function MapService:AddItemInDatabase(
+local unitTypesEnums = {
+	["BLOCK"] = blocks,
+	["MELEE"] = melee,
+	["RANGED"] = ranged,
+	["SPIKES"] = spikes,
+}
+
+function MapService:AddItemInDataBase(
 	player: Player,
 	itemType: string,
 	itemName: string,
@@ -86,10 +97,14 @@ function MapService:SetItemOnMap(
 
 		item:PivotTo(CFrame.new(position + Vector3.new(0, yOffset, 0)) * rotation)
 		item:SetAttribute("IS_BRAINROT", isBrainrot)
+
+		item:SetAttribute("HP", unitTypesEnums[unitType][unitName].HP)
+		item:SetAttribute("CURRENT_HP", unitTypesEnums[unitType][unitName].HP)
 		item.Parent = workspace.runtime[player.UserId][unitType]
 
 		if isBrainrot then
 			-- Add animation if unit is Brainrot
+			-- Adiciona a animação se for brainrot
 			MapService:CreateWalkAnimation(item)
 		end
 	end
@@ -152,15 +167,22 @@ function MapService:InitMapForPlayer(player: Player): ()
 	end
 end
 
-function MapService:RestartBaseMap(player: Player): ()
-	for _, itemType in ipairs(CONTAINER_TYPES) do
-		local container = workspace.runtime[player.UserId][itemType]
-		local items = container:GetChildren()
-		for _, item in ipairs(items) do
-			item:Destroy()
+function MapService:RestartBaseMap(player: Player)
+	local function clean(folderName: string)
+		local parts = workspace.runtime[player.UserId][folderName]:GetChildren()
+
+		for _, part in parts do
+			part:Destroy()
 		end
 	end
-	MapService:InitMapForPlayer(player)
+
+	clean("Enemys")
+	clean("RANGED")
+	clean("BLOCK")
+	clean("MELEE")
+	clean("SPIKES")
+
+	MapService:InitMapFromPlayer(player)
 end
 
 return MapService

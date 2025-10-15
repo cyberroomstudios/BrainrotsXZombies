@@ -4,7 +4,7 @@ local Blocks = table.freeze({
 
 	["blue"] = {
 		Name = "blue",
-		Life = 100,
+		HP = 350,
 		Price = 1000,
 		ProductId = 3430682566,
 		RestockProductId = 3430856119,
@@ -24,7 +24,7 @@ local Blocks = table.freeze({
 
 	["orange"] = {
 		Name = "orange",
-		Life = 100,
+		HP = 200,
 		Price = 1500,
 		ProductId = 3430731014,
 		RestockProductId = 3430856125,
@@ -44,7 +44,7 @@ local Blocks = table.freeze({
 
 	["yellow"] = {
 		Name = "yellow",
-		Life = 100,
+		HP = 500,
 		Price = 10000,
 		ProductId = 3430856042,
 		RestockProductId = 3430856129,

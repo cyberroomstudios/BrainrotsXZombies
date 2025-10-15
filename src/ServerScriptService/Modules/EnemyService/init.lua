@@ -137,6 +137,7 @@ function EnemyService:StartAttackThread(player: Player, enemy: Model)
 		local heart = base.baseTemplate.Heart.HitBox
 		local blocks = workspace.runtime[player.UserId].BLOCK:GetDescendants()
 		local ranged = workspace.runtime[player.UserId].RANGED:GetDescendants()
+		local melee = workspace.runtime[player.UserId].MELEE:GetDescendants()
 
 		local attackable = {}
 		for _, obj in ipairs(blocks) do
@@ -149,6 +150,13 @@ function EnemyService:StartAttackThread(player: Player, enemy: Model)
 				table.insert(attackable, obj)
 			end
 		end
+
+		for _, obj in ipairs(melee) do
+			if obj:GetAttribute("IS_UNIT") then
+				table.insert(attackable, obj)
+			end
+		end
+
 		table.insert(attackable, heart)
 
 		while enemy.Parent do
@@ -163,7 +171,7 @@ function EnemyService:StartAttackThread(player: Player, enemy: Model)
 					end
 
 					if part:GetAttribute("IS_UNIT") then
-						EnemyService:HitUnit(player, part)
+						EnemyService:HitUnit(player, part, enemy.Name)
 					elseif part:GetAttribute("IS_HEART") then
 						EnemyService:HitHeart(player, part)
 					end
@@ -183,24 +191,43 @@ function EnemyService:HitHeart(player: Player, heartPart: Part)
 	end
 end
 
-function EnemyService:HitUnit(player: Player, part: Part)
+function EnemyService:UpdateXpBar(model: Model)
+	local hp = model:GetAttribute("HP") -- HP TOTAL
+	local current = model:GetAttribute("CURRENT_HP") -- HP ATUAL
+
+	local percent = current / hp
+
+	local billboardGui = model:WaitForChild("XP")
+	billboardGui.Main.Content.Size = UDim2.fromScale(percent, 1)
+
+	if percent <= 0.5 then
+		billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 0, 0) -- Vermelho
+	elseif percent <= 0.75 then
+		billboardGui.Main.Content.BackgroundColor3 = Color3.new(1, 1, 0) -- Amarelo
+	end
+end
+
+function EnemyService:HitUnit(player: Player, part: Part, enemyType: string)
 	local model = part.Parent
 	if not model then
 		return
 	end
 
-	local life = (model:GetAttribute("LIFE") or 100) - 10
-	model:SetAttribute("LIFE", life)
+	local hitValue = enemy[enemyType].DamagePerSecond
+	local currentHP = model:GetAttribute("CURRENT_HP")
+	model:SetAttribute("CURRENT_HP", currentHP - hitValue)
 
-	if life <= 0 then
+	EnemyService:UpdateXpBar(model)
+
+	if currentHP <= 0 then
 		model:Destroy()
 	else
 		local factor
-		if life <= 30 then
+		if currentHP <= 30 then
 			factor = 0.75
-		elseif life <= 60 then
+		elseif currentHP <= 60 then
 			factor = 0.5
-		elseif life <= 90 then
+		elseif currentHP <= 90 then
 			factor = 0.25
 		end
 		if factor then

@@ -4,8 +4,10 @@ local Melee = table.freeze({
 
 	["cappuccinoAssassino"] = {
 		Name = "cappuccinoAssassino",
-		Life = 100,
+		HP = 1000,
+		Damege = 40,
 		Price = 1000,
+		Cadence = 1.8,
 		ProductId = 3430856048,
 		RestockProductId = 3430856132,
 		Rarity = "COMMON",
@@ -30,8 +32,10 @@ local Melee = table.freeze({
 
 	["tungTungSahur"] = {
 		Name = "tungTungSahur",
-		Life = 100,
+		HP = 700,
+		Damege = 30,
 		Price = 1000,
+		Cadence = 1.5,
 		ProductId = 3430856054,
 		RestockProductId = 3430856135,
 		Rarity = "COMMON",
@@ -56,8 +60,10 @@ local Melee = table.freeze({
 
 	["odin"] = {
 		Name = "odin",
-		Life = 100,
+		HP = 1400,
+		Damege = 80,
 		Price = 1000,
+		Cadence = 1.3,
 		ProductId = 3430856058,
 		RestockProductId = 3430856142,
 		Rarity = "COMMON",
@@ -82,8 +88,10 @@ local Melee = table.freeze({
 
 	["Lirili"] = {
 		Name = "Lirili",
-		Life = 100,
+		HP = 6000,
+		Damege = 200,
 		Price = 1000,
+		Cadence = 1.2,
 		ProductId = 3430856062,
 		RestockProductId = 3430856149,
 		Rarity = "COMMON",
