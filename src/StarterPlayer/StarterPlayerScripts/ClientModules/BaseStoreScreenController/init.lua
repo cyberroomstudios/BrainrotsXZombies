@@ -40,19 +40,19 @@ local CATEGORY_CONFIG: {
 		Blocks = {
 			Enum = Blocks,
 			Type = "BLOCK",
-			ContainerTag = "BLOCKS_CONTAINER",
+			ContainerTag = "BASE_SHOP_BLOCKS_CONTAINER",
 			TabButtonTag = "BASE_SHOP_BLOCKS_TAB_BUTTON",
 		},
 		Melee = {
 			Enum = Melee,
 			Type = "MELEE",
-			ContainerTag = "MELEE_CONTAINER",
+			ContainerTag = "BASE_SHOP_MELEE_CONTAINER",
 			TabButtonTag = "BASE_SHOP_MELEE_TAB_BUTTON",
 		},
 		Ranged = {
 			Enum = Ranged,
 			Type = "RANGED",
-			ContainerTag = "RANGED_CONTAINER",
+			ContainerTag = "BASE_SHOP_RANGED_CONTAINER",
 			TabButtonTag = "BASE_SHOP_RANGED_TAB_BUTTON",
 		},
 	}
