@@ -44,7 +44,7 @@ function StartGameService:InitBridgeListener()
 			-- Alocando a Base
 			BaseService:Allocate(player)
 
-			MapService:InitMapFromPlayer(player)
+			MapService:InitMapForPlayer(player)
 
 			StartGameService:InitPlayerAtributes(player)
 
@@ -78,7 +78,7 @@ function StartGameService:CreatePlayerFolder(player: Player)
 	playerFolder.Name = player.UserId
 
 	local enemysFolder = Instance.new("Folder", playerFolder)
-	enemysFolder.Name = "Enemys"
+	enemysFolder.Name = "ENEMIES"
 
 	local rangedUnitFolder = Instance.new("Folder", playerFolder)
 	rangedUnitFolder.Name = "RANGED"

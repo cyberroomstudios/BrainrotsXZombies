@@ -1,31 +1,32 @@
 local UnitService = {}
+
+-- === SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local ServerScriptService = game:GetService("ServerScriptService")
-
-local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
-
--- Init Bridg Net
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
+-- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
-
 local bridge = BridgeNet2.ReferenceBridge("UnitService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
 local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
--- End Bridg Net
+-- End Bridge Net
 
-local blocks = require(ReplicatedStorage.Enums.blocks)
-local melee = require(ReplicatedStorage.Enums.melee)
-local ranged = require(ReplicatedStorage.Enums.ranged)
-local spikes = require(ReplicatedStorage.Enums.spikes)
+-- === MODULES
+local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 
+-- === ENUMS
+local Blocks = require(ReplicatedStorage.Enums.blocks)
+local Melee = require(ReplicatedStorage.Enums.melee)
+local Ranged = require(ReplicatedStorage.Enums.ranged)
+local Spikes = require(ReplicatedStorage.Enums.spikes)
 
-function UnitService:Init()
+-- === GLOBAL FUNCTIONS
+function UnitService:Init(): ()
 	UnitService:InitBridgeListener()
 end
 
-function UnitService:InitBridgeListener()
+function UnitService:InitBridgeListener(): ()
 	bridge.OnServerInvoke = function(player, data)
 		if data[actionIdentifier] == "GetAllUnits" then
 			return PlayerDataHandler:Get(player, "unitsBackpack")
@@ -33,12 +34,12 @@ function UnitService:InitBridgeListener()
 	end
 end
 
-function UnitService:Give(player: Player, unitName: string, unitType: string)
+function UnitService:Give(player: Player, unitName: string, unitType: string): ()
 	local unitTypesMap = {
-		["BLOCK"] = blocks,
-		["MELEE"] = melee,
-		["RANGED"] = ranged,
-		["SPIKES"] = spikes,
+		["BLOCK"] = Blocks,
+		["MELEE"] = Melee,
+		["RANGED"] = Ranged,
+		["SPIKES"] = Spikes,
 	}
 
 	if not unitTypesMap[unitType] then
@@ -76,9 +77,9 @@ function UnitService:Give(player: Player, unitName: string, unitType: string)
 	)
 end
 
-function UnitService:Consume(player: Player, unitName: string, unitType: string)
+function UnitService:Consume(player: Player, unitName: string, unitType: string): ()
 	local unitTypesMap = {
-		["BLOCK"] = blocks,
+		["BLOCK"] = Blocks,
 	}
 
 	if not unitTypesMap[unitType] then
@@ -91,7 +92,7 @@ function UnitService:Consume(player: Player, unitName: string, unitType: string)
 		return
 	end
 
-	PlayerDataHandler:Update(player, "unitsBackpack", function(current)
+	PlayerDataHandler:Update(player, "unitsBackpack", function(current: table): table
 		for _, value in ipairs(current) do
 			if value.UnitName == unitName then
 				if value.Amount <= 0 then

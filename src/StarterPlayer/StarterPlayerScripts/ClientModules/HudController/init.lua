@@ -5,7 +5,7 @@ local player = Players.LocalPlayer
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local TeleportController = require(Players.LocalPlayer.PlayerScripts.ClientModules.TeleportController)
 local WaveController = require(Players.LocalPlayer.PlayerScripts.ClientModules.WaveController)
-local UnitsScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.UnitsScreenController)
+local BackpackScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenController)
 local MeleeThreadController = require(Players.LocalPlayer.PlayerScripts.ClientModules.MeleeThreadController)
 local RangedController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedController)
 local RangedTowerController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedTowerController)
@@ -62,7 +62,7 @@ function HudController:InitButtonListerns()
 	end)
 
 	toolsButton.MouseButton1Click:Connect(function()
-		UnitsScreenController:Open()
+		BackpackScreenController:ToggleVisibility()
 	end)
 end
 

@@ -29,7 +29,6 @@ local cachedJoinTimestamps = {}
 local dataTemplate = {
 	totalPlaytime = 0,
 	itemsOnMap = {},
-	itemOnMapId = 0,
 	unitsBackpack = {},
 	money = 0,
 	restockCycle = 0,

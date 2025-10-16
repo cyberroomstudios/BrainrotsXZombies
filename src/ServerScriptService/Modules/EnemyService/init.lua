@@ -95,7 +95,7 @@ function EnemyService:Create(player: Player, enemySpawn: Part, enemyType: string
 		humanoid.WalkSpeed = 7 * enemy[enemyType].Speed
 
 		newEnemy:SetAttribute("IS_ENEMY", true)
-		newEnemy.Parent = workspace.runtime[player.UserId].Enemys
+		newEnemy.Parent = workspace.runtime[player.UserId].ENEMIES
 		newEnemy:SetPrimaryPartCFrame(enemySpawn.CFrame)
 
 		-- Define o Network Owner (somente se o player existir)
@@ -234,7 +234,7 @@ function EnemyService:CreateOnDiedListener(player: Player, enemy: Model)
 end
 
 function EnemyService:ReportNewDied(player: Player)
-	local enemiesFolder = workspace.runtime[player.UserId].Enemys
+	local enemiesFolder = workspace.runtime[player.UserId].ENEMIES
 	if #enemiesFolder:GetChildren() == 0 then
 		if not WaveService then
 			WaveService = require(ServerScriptService.Modules.WaveService)
@@ -249,7 +249,7 @@ function EnemyService:KillPlayer(player: Player)
 	player:SetAttribute("GAME_ON", false)
 	player:SetAttribute("CURRENT_WAVE", 1)
 
-	for _, enemy in ipairs(workspace.runtime[player.UserId].Enemys:GetChildren()) do
+	for _, enemy in ipairs(workspace.runtime[player.UserId].ENEMIES:GetChildren()) do
 		enemy:Destroy()
 	end
 

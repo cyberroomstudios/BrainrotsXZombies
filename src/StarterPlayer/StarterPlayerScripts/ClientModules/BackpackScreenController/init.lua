@@ -1,4 +1,4 @@
-local UnitsScreenController = {}
+local BackpackScreenController = {}
 
 -- === SERVICES
 local Players = game:GetService("Players")
@@ -21,41 +21,55 @@ local Screen: Frame
 local ItemsContainer: Frame
 local ItemTemplate: TextButton
 local CloseButton: TextButton
+local RemoveAllButton: TextButton
 
 -- === GLOBAL VARIABLES
-function UnitsScreenController:Init(): ()
-	UnitsScreenController:CreateReferences()
-	UnitsScreenController:InitButtonListeners()
+function BackpackScreenController:Init(): ()
+	BackpackScreenController:CreateReferences()
+	BackpackScreenController:InitButtonListeners()
 end
 
-function UnitsScreenController:CreateReferences(): ()
+function BackpackScreenController:CreateReferences(): ()
 	Screen = UIReferences:GetReference("BACKPACK_SCREEN")
 	ItemsContainer = UIReferences:GetReference("BACKPACK_ITEMS_CONTAINER")
 	ItemTemplate = ReplicatedStorage.GUI.Backpack.ITEM
 	CloseButton = UIReferences:GetReference("BACKPACK_CLOSE_BUTTON")
+	RemoveAllButton = UIReferences:GetReference("BACKPACK_REMOVE_ALL_BUTTON")
 end
 
-function UnitsScreenController:InitButtonListeners(): ()
+function BackpackScreenController:InitButtonListeners(): ()
 	CloseButton.MouseButton1Click:Connect(function(): ()
-		UnitsScreenController:Close()
+		BackpackScreenController:Close()
+	end)
+	RemoveAllButton.MouseButton1Click:Connect(function(): ()
+		PreviewController:RemoveAllItems()
 	end)
 end
 
-function UnitsScreenController:Open(): ()
-	Screen.Visible = true
-	UnitsScreenController:BuildScreen()
+function BackpackScreenController:ToggleVisibility(): ()
+	if Screen.Visible then
+		BackpackScreenController:Close()
+	else
+		BackpackScreenController:Open()
+	end
 end
 
-function UnitsScreenController:Close(): ()
+function BackpackScreenController:Open(): ()
+	Screen.Visible = true
+	BackpackScreenController:BuildScreen()
+end
+
+function BackpackScreenController:Close(): ()
 	Screen.Visible = false
 	for _, item in ItemsContainer:GetChildren() do
 		if not item:IsA("UIGridLayout") then
 			item:Destroy()
 		end
 	end
+	PreviewController:Stop()
 end
 
-function UnitsScreenController:BuildScreen(): ()
+function BackpackScreenController:BuildScreen(): ()
 	local result = bridge:InvokeServerAsync({
 		[actionIdentifier] = "GetAllUnits",
 		data = {},
@@ -72,9 +86,9 @@ function UnitsScreenController:BuildScreen(): ()
 			PreviewController:Start(unitType, unitName)
 		end)
 		local quantityLabel: TextLabel = itemButton:FindFirstChild("Quantity", true)
-		quantityLabel.Text = tostring(unitAmount)
+		quantityLabel.Text = `x{unitAmount}`
 		-- TODO implement the 3D preview using ViewportFrame
 	end
 end
 
-return UnitsScreenController
+return BackpackScreenController

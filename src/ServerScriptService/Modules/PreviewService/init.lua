@@ -1,35 +1,49 @@
 local PreviewService = {}
 
--- Init Bridg Net
-local ServerScriptService = game:GetService("ServerScriptService")
+-- === SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local ServerScriptService = game:GetService("ServerScriptService")
+-- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
-
 local bridge = BridgeNet2.ReferenceBridge("PreviewService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
 local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
--- End Bridg Net
+-- End Bridge Net
 
+-- === MODULES
 local BaseService = require(ServerScriptService.Modules.BaseService)
 local UtilService = require(ServerScriptService.Modules.UtilService)
 local MapService = require(ServerScriptService.Modules.MapService)
 
-function PreviewService:Init()
+-- === GLOBAL FUNCTIONS
+function PreviewService:Init(): ()
 	PreviewService:InitBridgeListener()
 end
 
-function PreviewService:InitBridgeListener()
-	bridge.OnServerInvoke = function(player, data)
+function PreviewService:InitBridgeListener(): ()
+	bridge.OnServerInvoke = function(player: Player, data: table): ()
 		if data[actionIdentifier] == "SetItem" then
 			local itemType = data.data.ItemType
 			local itemName = data.data.ItemName
 			local slot = data.data.Slot
 			local subSlot = data.data.SubSlot
 			local isBrainrot = data.data.IsBrainrot
-			
 			PreviewService:SetItem(player, itemType, itemName, slot, subSlot, isBrainrot)
+		elseif data[actionIdentifier] == "RemoveItem" then
+			local itemType = data.data.ItemType
+			local itemName = data.data.ItemName
+			local slot = data.data.Slot
+			local subSlot = data.data.SubSlot
+			PreviewService:RemoveItem(player, itemType, itemName, slot, subSlot)
+		elseif data[actionIdentifier] == "RemoveAllItems" then
+			PreviewService:RemoveAllItems(player)
+		else
+			return {
+				[statusIdentifier] = "error",
+				[messageIdentifier] = "Invalid action",
+			}
 		end
 	end
 end
@@ -41,9 +55,23 @@ function PreviewService:SetItem(
 	slot: number,
 	subSlot: number,
 	isBrainrot: boolean
-)
+): ()
 	MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot, isBrainrot)
-	MapService:AddItemInDataBase(player, itemType, itemName, slot, subSlot, isBrainrot)
+	MapService:AddItemInDatabase(player, itemType, itemName, slot, subSlot, isBrainrot)
+end
+
+function PreviewService:RemoveItem(
+	player: Player,
+	itemType: string,
+	itemName: string,
+	slot: number,
+	subSlot: number
+): ()
+	MapService:RemoveItemFromMap(player, itemType, itemName, slot, subSlot)
+end
+
+function PreviewService:RemoveAllItems(player: Player): ()
+	MapService:ClearMapItems(player)
 end
 
 return PreviewService
