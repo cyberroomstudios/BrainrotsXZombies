@@ -170,7 +170,7 @@ function PreviewController:Start(unitType: string, unitName: string): ()
 	local gridOrigin = PreviewController:GetStartBasePartPosition()
 	PreviewModel = PreviewController:GetItemFromTypeAndName(unitType, unitName)
 	PreviewModel.PrimaryPart.Transparency = 0.5
-	PreviewModel.PrimaryPart.CanCollide = false
+	PreviewModel.PrimaryPart.CanTouch = false
 	PreviewModel.PrimaryPart.CanCollide = false
 	PreviewModel.PrimaryPart.Anchored = true
 

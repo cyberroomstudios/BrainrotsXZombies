@@ -90,12 +90,12 @@ function MapService:SetItemOnMap(
 
 		if isBrainrot then
 			-- Add animation if unit is Brainrot
-			MapService:CreateWalkAnimation(item)
+			MapService:PlayIdleAnimation(item)
 		end
 	end
 end
 
-function MapService:CreateWalkAnimation(model: Model): ()
+function MapService:PlayIdleAnimation(model: Model): ()
 	local AnimationController: AnimationController = model:FindFirstChild("AnimationController")
 	local idle = AnimationController:LoadAnimation(model.Animations.Idle)
 	idle.Priority = Enum.AnimationPriority.Idle
