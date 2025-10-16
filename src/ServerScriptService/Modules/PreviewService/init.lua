@@ -14,8 +14,9 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 
 -- === MODULES
 local BaseService = require(ServerScriptService.Modules.BaseService)
-local UtilService = require(ServerScriptService.Modules.UtilService)
 local MapService = require(ServerScriptService.Modules.MapService)
+local UnitService = require(ServerScriptService.Modules.UnitService)
+local UtilService = require(ServerScriptService.Modules.UtilService)
 
 -- === GLOBAL FUNCTIONS
 function PreviewService:Init(): ()
@@ -56,8 +57,10 @@ function PreviewService:SetItem(
 	subSlot: number,
 	isBrainrot: boolean
 ): ()
-	MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot, isBrainrot)
-	MapService:AddItemInDatabase(player, itemType, itemName, slot, subSlot, isBrainrot)
+	if UnitService:Consume(player, itemName, itemType) then
+		MapService:SetItemOnMap(player, itemType, itemName, slot, subSlot, isBrainrot)
+		MapService:AddItemInDatabase(player, itemType, itemName, slot, subSlot, isBrainrot)
+	end
 end
 
 function PreviewService:RemoveItem(
@@ -68,10 +71,16 @@ function PreviewService:RemoveItem(
 	subSlot: number
 ): ()
 	MapService:RemoveItemFromMap(player, itemType, itemName, slot, subSlot)
+	UnitService:Give(player, itemName, itemType)
 end
 
 function PreviewService:RemoveAllItems(player: Player): ()
-	MapService:ClearMapItems(player)
+	local removedItems = MapService:ClearMapItems(player)
+	for unitType, units in pairs(removedItems) do
+		for unitName, amount in pairs(units) do
+			UnitService:Give(player, unitName, unitType, amount)
+		end
+	end
 end
 
 return PreviewService

@@ -21,6 +21,13 @@ local Melee = require(ReplicatedStorage.Enums.melee)
 local Ranged = require(ReplicatedStorage.Enums.ranged)
 local Spikes = require(ReplicatedStorage.Enums.spikes)
 
+local ENUM_BY_UNIT_TYPE = table.freeze({
+	BLOCK = Blocks,
+	MELEE = Melee,
+	RANGED = Ranged,
+	SPIKES = Spikes,
+})
+
 -- === GLOBAL FUNCTIONS
 function UnitService:Init(): ()
 	UnitService:InitBridgeListener()
@@ -34,81 +41,78 @@ function UnitService:InitBridgeListener(): ()
 	end
 end
 
-function UnitService:Give(player: Player, unitName: string, unitType: string): ()
-	local unitTypesMap = {
-		["BLOCK"] = Blocks,
-		["MELEE"] = Melee,
-		["RANGED"] = Ranged,
-		["SPIKES"] = Spikes,
-	}
-
-	if not unitTypesMap[unitType] then
-		warn("[ERROR] Unit Type Map not found")
+function UnitService:Give(player: Player, unitName: string, unitType: string, amount: number?): ()
+	local module = ENUM_BY_UNIT_TYPE[unitType]
+	if not module then
+		warn(`Enum not found for type {unitType}`)
 		return
 	end
 
-	if not unitTypesMap[unitType] then
-		warn(" [ERROR] Unit not found:" .. unitName)
+	if not module[unitName] then
+		warn(`Unit {unitName} not found in type {unitType}`)
 		return
 	end
 
+	amount = amount or 1
 	PlayerDataHandler:Update(player, "unitsBackpack", function(current)
-		local data = {
-			UnitName = unitName,
-			UnitType = unitType,
-			Amount = 1,
-			IsBrainrot = unitTypesMap[unitType][unitName].IsBrainrot,
-		}
-
+		-- Update existing item
 		for _, value in ipairs(current) do
 			if value.UnitName == unitName then
-				value.Amount = value.Amount + 1
-				return current -- já encontrou, pode retornar
+				value.Amount += amount
+				amount = value.Amount
+				return current
 			end
 		end
-
-		-- Se não encontrou, adiciona novo
-		table.insert(current, data)
+		-- Add new item
+		table.insert(current, {
+			UnitName = unitName,
+			UnitType = unitType,
+			Amount = amount,
+			IsBrainrot = module[unitName].IsBrainrot,
+		})
 		return current
 	end)
 	print(
 		`[UnitService] Given unit {unitName} to player {player.Name}. Backpack: `,
 		PlayerDataHandler:Get(player, "unitsBackpack")
 	)
+	bridge:Fire(player, {
+		[actionIdentifier] = "ItemAdded",
+		UnitName = unitName,
+		UnitType = unitType,
+		Amount = amount,
+	})
 end
 
-function UnitService:Consume(player: Player, unitName: string, unitType: string): ()
-	local unitTypesMap = {
-		["BLOCK"] = Blocks,
-	}
-
-	if not unitTypesMap[unitType] then
-		warn("[ERROR] Unit Type Map not found")
-		return
-	end
-
-	if not unitTypesMap[unitType] then
-		warn(" [ERROR] Unit not found:" .. unitName)
-		return
-	end
-
+function UnitService:Consume(player: Player, unitName: string, unitType: string): boolean
+	local consumed: boolean = false
+	local amount: number = 0
 	PlayerDataHandler:Update(player, "unitsBackpack", function(current: table): table
 		for _, value in ipairs(current) do
 			if value.UnitName == unitName then
-				if value.Amount <= 0 then
-					warn("Unit without amount: " .. unitName)
-					return current -- não consome, pois não há quantidade
+				if value.Amount < 1 then
+					warn(`Tried to consume unit {unitName} amount that player {player.Name} does not have`)
+					return current -- Can't consume
 				end
-
-				value.Amount = value.Amount - 1
-				return current -- consumiu uma unidade
+				value.Amount -= 1
+				amount = value.Amount
+				consumed = true
+				return current -- consumed one unit
 			end
 		end
 
-		-- Se não encontrou a unidade no backpack
-		warn("Unit not in backpack: " .. unitName)
+		warn(`Tried to consume unit {unitName} that's not present in player {player.Name}'s backpack`)
 		return current
 	end)
+	if consumed then
+		bridge:Fire(player, {
+			[actionIdentifier] = "ItemQuantityChanged",
+			UnitName = unitName,
+			UnitType = unitType,
+			Amount = amount,
+		})
+	end
+	return consumed
 end
 
 return UnitService

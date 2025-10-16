@@ -128,8 +128,19 @@ function MapService:RemoveItemFromMap(
 	end
 end
 
-function MapService:ClearMapItems(player: Player): ()
-	print("Clearing all map items for player:", player.Name)
+function MapService:ClearMapItems(player: Player): table
+	Debug.print("Clearing all map items for player:", player.Name)
+	local itemsOnMap = PlayerDataHandler:Get(player, "itemsOnMap")
+	local removedItems: table = {}
+	for _, item in ipairs(itemsOnMap) do
+		if not removedItems[item.Type] then
+			removedItems[item.Type] = {}
+		end
+		if not removedItems[item.Type][item.Name] then
+			removedItems[item.Type][item.Name] = 0
+		end
+		removedItems[item.Type][item.Name] += 1
+	end
 	PlayerDataHandler:Set(player, "itemsOnMap", {})
 	for _, itemType in ipairs(CONTAINER_TYPES) do
 		local container = workspace.runtime[player.UserId][itemType]
@@ -138,6 +149,7 @@ function MapService:ClearMapItems(player: Player): ()
 			item:Destroy()
 		end
 	end
+	return removedItems
 end
 
 function MapService:InitMapForPlayer(player: Player): ()

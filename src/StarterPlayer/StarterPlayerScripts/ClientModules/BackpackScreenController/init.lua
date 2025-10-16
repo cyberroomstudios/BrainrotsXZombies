@@ -22,11 +22,13 @@ local ItemsContainer: Frame
 local ItemTemplate: TextButton
 local CloseButton: TextButton
 local RemoveAllButton: TextButton
+local Items: { [string]: { [string]: { Button: TextButton, QuantityLabel: TextLabel } } }
 
 -- === GLOBAL VARIABLES
 function BackpackScreenController:Init(): ()
 	BackpackScreenController:CreateReferences()
 	BackpackScreenController:InitButtonListeners()
+	BackpackScreenController:InitBridgeListener()
 end
 
 function BackpackScreenController:CreateReferences(): ()
@@ -46,6 +48,26 @@ function BackpackScreenController:InitButtonListeners(): ()
 	end)
 end
 
+function BackpackScreenController:InitBridgeListener(): ()
+	bridge:Connect(function(response: table): ()
+		if typeof(response) ~= "table" then
+			return
+		end
+		local action = response[actionIdentifier]
+		if action == "ItemQuantityChanged" then
+			local unitName: string = response.UnitName
+			local unitType: string = response.UnitType
+			local amount: number = response.Amount
+			BackpackScreenController:SetItemQuantity(unitType, unitName, amount)
+		elseif action == "ItemAdded" then
+			local unitName: string = response.UnitName
+			local unitType: string = response.UnitType
+			local amount: number = response.Amount
+			BackpackScreenController:SetItemQuantity(unitType, unitName, amount)
+		end
+	end)
+end
+
 function BackpackScreenController:ToggleVisibility(): ()
 	if Screen.Visible then
 		BackpackScreenController:Close()
@@ -56,16 +78,13 @@ end
 
 function BackpackScreenController:Open(): ()
 	Screen.Visible = true
-	BackpackScreenController:BuildScreen()
+	if Items == nil then
+		BackpackScreenController:BuildScreen()
+	end
 end
 
 function BackpackScreenController:Close(): ()
 	Screen.Visible = false
-	for _, item in ItemsContainer:GetChildren() do
-		if not item:IsA("UIGridLayout") then
-			item:Destroy()
-		end
-	end
 	PreviewController:Stop()
 end
 
@@ -74,20 +93,34 @@ function BackpackScreenController:BuildScreen(): ()
 		[actionIdentifier] = "GetAllUnits",
 		data = {},
 	})
-	print(result)
+	Items = {}
 	for _, unit in pairs(result) do
-		local unitName: string = unit.UnitName
-		local unitType: string = unit.UnitType
-		local unitAmount: number = unit.Amount
-		local itemButton: TextButton = ItemTemplate:Clone()
-		itemButton.Parent = ItemsContainer
-		itemButton.Visible = true
-		itemButton.MouseButton1Click:Connect(function(): ()
-			PreviewController:Start(unitType, unitName)
-		end)
-		local quantityLabel: TextLabel = itemButton:FindFirstChild("Quantity", true)
-		quantityLabel.Text = `x{unitAmount}`
-		-- TODO implement the 3D preview using ViewportFrame
+		BackpackScreenController:CreateItem(unit.UnitType, unit.UnitName, unit.Amount)
+	end
+end
+
+function BackpackScreenController:CreateItem(unitType: string, unitName: string, amount: number): ()
+	if Items and Items[unitType] and Items[unitType][unitName] then
+		warn(`UNEXPECTED: There's already a unit of type {unitType} with name {unitName} in the backpack.`)
+		return
+	end
+	local itemButton: TextButton = ItemTemplate:Clone()
+	itemButton.Parent = ItemsContainer
+	itemButton.Visible = true
+	itemButton.MouseButton1Click:Connect(function(): ()
+		PreviewController:Start(unitType, unitName)
+	end)
+	local quantityLabel: TextLabel = itemButton:FindFirstChild("Quantity", true)
+	quantityLabel.Text = `x{amount}`
+	Items[unitType] = Items[unitType] or {}
+	Items[unitType][unitName] = { Button = itemButton, QuantityLabel = quantityLabel }
+end
+
+function BackpackScreenController:SetItemQuantity(unitType: string, unitName: string, amount: number): ()
+	if Items and Items[unitType] and Items[unitType][unitName] then
+		Items[unitType][unitName].QuantityLabel.Text = `x{amount}`
+	else
+		warn(`UNEXPECTED: There's no unit of type {unitType} with name {unitName} in the backpack.`)
 	end
 end
 
