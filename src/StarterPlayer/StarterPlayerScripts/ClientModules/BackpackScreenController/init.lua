@@ -24,7 +24,7 @@ local CloseButton: TextButton
 local RemoveAllButton: TextButton
 local Items: { [string]: { [string]: { Button: TextButton, QuantityLabel: TextLabel } } }
 
--- === GLOBAL VARIABLES
+-- === GLOBAL FUNCTIONS
 function BackpackScreenController:Init(): ()
 	BackpackScreenController:CreateReferences()
 	BackpackScreenController:InitButtonListeners()
@@ -86,6 +86,10 @@ end
 function BackpackScreenController:Close(): ()
 	Screen.Visible = false
 	PreviewController:Stop()
+end
+
+function BackpackScreenController:IsOpen(): boolean
+	return Screen ~= nil and Screen.Visible
 end
 
 function BackpackScreenController:BuildScreen(): ()

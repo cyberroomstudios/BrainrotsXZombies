@@ -14,6 +14,8 @@ local Debug = require(ReplicatedStorage.Utility.Debug)(script)
 local Blocks = require(ReplicatedStorage.Enums.blocks)
 
 local CONTAINER_TYPES = { "BLOCK", "ENEMIES", "MELEE", "RANGED", "SPIKES" }
+local SLOT_ATTRIBUTE = "MAP_SLOT"
+local SUB_SLOT_ATTRIBUTE = "MAP_SUB_SLOT"
 
 -- === GLOBAL FUNCTIONS
 function MapService:Init(): () end
@@ -86,6 +88,8 @@ function MapService:SetItemOnMap(
 
 		item:PivotTo(CFrame.new(position + Vector3.new(0, yOffset, 0)) * rotation)
 		item:SetAttribute("IS_BRAINROT", isBrainrot)
+		item:SetAttribute(SLOT_ATTRIBUTE, tostring(slot))
+		item:SetAttribute(SUB_SLOT_ATTRIBUTE, tostring(subSlot))
 		item.Parent = workspace.runtime[player.UserId][unitType]
 
 		if isBrainrot then
@@ -120,11 +124,28 @@ function MapService:RemoveItemFromMap(
 	end)
 
 	local container = workspace.runtime[player.UserId][itemType]
-	local instance = container:FindFirstChild(itemName)
+	local stringSlot = tostring(slot)
+	local stringSubSlot = tostring(subSlot)
+	local instance: Instance?
+	for _, child in ipairs(container:GetChildren()) do
+		if child.Name == itemName then
+			local childSlot = child:GetAttribute(SLOT_ATTRIBUTE)
+			local childSubSlot = child:GetAttribute(SUB_SLOT_ATTRIBUTE)
+			if childSlot == stringSlot and childSubSlot == stringSubSlot then
+				instance = child
+				break
+			end
+		end
+	end
+	if not instance then
+		instance = container:FindFirstChild(itemName)
+	end
 	if instance then
 		instance:Destroy()
 	else
-		Debug.warn(`Instance not found in workspace: {itemName} of type {itemType} for player {player.Name}`)
+		Debug.warn(
+			`Instance not found in workspace: {itemName} (slot {slot}, subSlot {subSlot}) of type {itemType} for player {player.Name}`
+		)
 	end
 end
 
