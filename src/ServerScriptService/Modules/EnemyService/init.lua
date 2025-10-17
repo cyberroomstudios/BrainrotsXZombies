@@ -139,6 +139,7 @@ function EnemyService:StartAttackThread(player: Player, enemy: Model)
 		local blocks = workspace.runtime[player.UserId].BLOCK:GetDescendants()
 		local ranged = workspace.runtime[player.UserId].RANGED:GetDescendants()
 		local melee = workspace.runtime[player.UserId].MELEE:GetDescendants()
+		local melee = workspace.runtime[player.UserId].SPIKES:GetDescendants()
 
 		local attackable = {}
 		for _, obj in ipairs(blocks) do
