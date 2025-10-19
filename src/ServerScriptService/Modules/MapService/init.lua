@@ -13,6 +13,7 @@ local Debug = require(ReplicatedStorage.Utility.Debug)(script)
 -- === ENUMS
 local Blocks = require(ReplicatedStorage.Enums.blocks)
 
+-- === CONSTANTS
 local CONTAINER_TYPES = { "BLOCK", "ENEMIES", "MELEE", "RANGED", "SPIKES" }
 local SLOT_ATTRIBUTE = "MAP_SLOT"
 local SUB_SLOT_ATTRIBUTE = "MAP_SUB_SLOT"
@@ -41,7 +42,7 @@ function MapService:AddItemInDatabase(
 	end)
 end
 
-function MapService:GetItemFromTypeAndName(unitType: string, unitName: string): Model?
+function MapService:GetUnitTemplate(unitType: string, unitName: string): Model?
 	local unitsFolder: Folder = ReplicatedStorage.developer.units
 	local items = {
 		["BLOCK"] = unitsFolder.blocks,
@@ -80,7 +81,7 @@ function MapService:SetItemOnMap(
 		local subSlotPart = UtilService:WaitForDescendants(slotModel, subSlot)
 
 		local position = subSlotPart.Position
-		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
+		local item = MapService:GetUnitTemplate(unitType, unitName)
 		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
 
 		local baseIndex = tonumber(base.Name)
@@ -99,6 +100,28 @@ function MapService:SetItemOnMap(
 	end
 end
 
+function MapService:GetUnitInMap(
+	player: Player,
+	unitType: string,
+	unitName: string,
+	slot: number,
+	subSlot: number
+): Model?
+	local container = workspace.runtime[player.UserId][unitType]
+	local stringSlot = tostring(slot)
+	local stringSubSlot = tostring(subSlot)
+	for _, child in ipairs(container:GetChildren()) do
+		if child.Name == unitName then
+			local childSlot = child:GetAttribute(SLOT_ATTRIBUTE)
+			local childSubSlot = child:GetAttribute(SUB_SLOT_ATTRIBUTE)
+			if childSlot == stringSlot and childSubSlot == stringSubSlot then
+				return child
+			end
+		end
+	end
+	return nil
+end
+
 function MapService:PlayIdleAnimation(model: Model): ()
 	local AnimationController: AnimationController = model:FindFirstChild("AnimationController")
 	local idle = AnimationController:LoadAnimation(model.Animations.Idle)
@@ -112,41 +135,35 @@ function MapService:RemoveItemFromMap(
 	itemName: string,
 	slot: number,
 	subSlot: number
-): ()
-	PlayerDataHandler:Update(player, "itemsOnMap", function(current: table): table
-		for index, item in ipairs(current) do
-			if item.Type == itemType and item.Name == itemName and item.Slot == slot and item.SubSlot == subSlot then
-				table.remove(current, index)
-				break
-			end
-		end
-		return current
-	end)
-
-	local container = workspace.runtime[player.UserId][itemType]
-	local stringSlot = tostring(slot)
-	local stringSubSlot = tostring(subSlot)
-	local instance: Instance?
-	for _, child in ipairs(container:GetChildren()) do
-		if child.Name == itemName then
-			local childSlot = child:GetAttribute(SLOT_ATTRIBUTE)
-			local childSubSlot = child:GetAttribute(SUB_SLOT_ATTRIBUTE)
-			if childSlot == stringSlot and childSubSlot == stringSubSlot then
-				instance = child
-				break
-			end
-		end
-	end
-	if not instance then
-		instance = container:FindFirstChild(itemName)
-	end
+): boolean
+	local instance: Model? = MapService:GetUnitInMap(player, itemType, itemName, slot, subSlot)
 	if instance then
 		instance:Destroy()
 	else
 		Debug.warn(
 			`Instance not found in workspace: {itemName} (slot {slot}, subSlot {subSlot}) of type {itemType} for player {player.Name}`
 		)
+		return false
 	end
+
+	local removed: boolean = false
+	PlayerDataHandler:Update(player, "itemsOnMap", function(current: table): table
+		for index, item in ipairs(current) do
+			if
+				item.Type == itemType
+				and item.Name == itemName
+				and item.Slot == tostring(slot)
+				and item.SubSlot == tostring(subSlot)
+			then
+				table.remove(current, index)
+				removed = true
+				break
+			end
+		end
+		return current
+	end)
+
+	return removed
 end
 
 function MapService:ClearMapItems(player: Player): table
@@ -175,6 +192,7 @@ end
 
 function MapService:InitMapForPlayer(player: Player): ()
 	local items = PlayerDataHandler:Get(player, "itemsOnMap")
+	print("Initializing map for player:", player.Name, "with items:", items)
 	for _, item in items do
 		local itemType = item.Type
 		local itemName = item.Name

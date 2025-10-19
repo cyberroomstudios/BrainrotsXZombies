@@ -70,8 +70,13 @@ function PreviewService:RemoveItem(
 	slot: number,
 	subSlot: number
 ): ()
-	MapService:RemoveItemFromMap(player, itemType, itemName, slot, subSlot)
-	UnitService:Give(player, itemName, itemType)
+	if MapService:RemoveItemFromMap(player, itemType, itemName, slot, subSlot) then
+		UnitService:Give(player, itemName, itemType)
+	else
+		warn(
+			`Failed to remove item from map: {itemName} (slot {slot}, subSlot {subSlot}) of type {itemType} for player {player.Name}`
+		)
+	end
 end
 
 function PreviewService:RemoveAllItems(player: Player): ()

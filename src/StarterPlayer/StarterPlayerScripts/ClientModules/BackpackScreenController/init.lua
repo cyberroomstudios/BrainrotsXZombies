@@ -124,7 +124,7 @@ function BackpackScreenController:SetItemQuantity(unitType: string, unitName: st
 	if Items and Items[unitType] and Items[unitType][unitName] then
 		Items[unitType][unitName].QuantityLabel.Text = `x{amount}`
 	else
-		warn(`UNEXPECTED: There's no unit of type {unitType} with name {unitName} in the backpack.`)
+		print(`Skipped updating {unitType}/{unitName} quantity because it does not exist in the backpack UI.`)
 	end
 end
 
