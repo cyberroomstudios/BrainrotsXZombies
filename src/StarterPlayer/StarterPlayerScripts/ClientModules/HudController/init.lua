@@ -3,13 +3,15 @@ local HudController = {}
 local Players = game:GetService("Players")
 local player = Players.LocalPlayer
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
-local TeleportController = require(Players.LocalPlayer.PlayerScripts.ClientModules.TeleportController)
-local WaveController = require(Players.LocalPlayer.PlayerScripts.ClientModules.WaveController)
-local BackpackScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenController)
-local MeleeThreadController = require(Players.LocalPlayer.PlayerScripts.ClientModules.MeleeThreadController)
-local RangedController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedController)
-local RangedTowerController = require(Players.LocalPlayer.PlayerScripts.ClientModules.RangedTowerController)
-local SpikesController = require(Players.LocalPlayer.PlayerScripts.ClientModules.SpikesController)
+local ClientModules = Players.LocalPlayer.PlayerScripts.ClientModules
+local BackpackScreenController = require(ClientModules.BackpackScreenController)
+local MeleeThreadController = require(ClientModules.MeleeThreadController)
+local RangedController = require(ClientModules.RangedController)
+local RangedTowerController = require(ClientModules.RangedTowerController)
+local RemoveUnitController = require(ClientModules.RemoveUnitController)
+local SpikesController = require(ClientModules.SpikesController)
+local TeleportController = require(ClientModules.TeleportController)
+local WaveController = require(ClientModules.WaveController)
 
 local storeButton
 local fightButton
@@ -21,7 +23,8 @@ local baseLife
 local backpackFrame
 
 -- Bottom
-local toolsButton
+local OpenBackpackButton
+local OpenRemoveUnitButton
 
 function HudController:Init()
 	HudController:CreateReferences()
@@ -40,7 +43,8 @@ function HudController:CreateReferences()
 	baseLife = UIReferences:GetReference("BASE_LIFE_HUD")
 	backpackFrame = UIReferences:GetReference("BACKPACK_HUD")
 
-	toolsButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
+	OpenBackpackButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
+	OpenRemoveUnitButton = UIReferences:GetReference("REMOVE_UNIT_BUTTON_HUD")
 end
 
 function HudController:InitButtonListerns()
@@ -63,8 +67,20 @@ function HudController:InitButtonListerns()
 		SpikesController:Start()
 	end)
 
-	toolsButton.MouseButton1Click:Connect(function()
+	OpenBackpackButton.MouseButton1Click:Connect(function(): ()
 		BackpackScreenController:ToggleVisibility()
+		-- TODO use a generic approach later, after implementing all the 4 hotbar buttons
+		if BackpackScreenController:IsOpen() and RemoveUnitController:IsActive() then
+			RemoveUnitController:Stop()
+		end
+	end)
+
+	OpenRemoveUnitButton.MouseButton1Click:Connect(function(): ()
+		RemoveUnitController:Toggle()
+		-- TODO use a generic approach later, after implementing all the 4 hotbar buttons
+		if RemoveUnitController:IsActive() and BackpackScreenController:IsOpen() then
+			BackpackScreenController:Close()
+		end
 	end)
 end
 

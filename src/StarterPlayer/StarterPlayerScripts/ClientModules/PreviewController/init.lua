@@ -137,7 +137,7 @@ function PreviewController:GetStartBasePartPosition(): Vector3?
 	end
 end
 
-function PreviewController:GetItemFromTypeAndName(unitType: string, unitName: string): Model?
+function PreviewController:GetUnitTemplate(unitType: string, unitName: string): Model?
 	local unitsFolder = ReplicatedStorage.developer.units
 	local items = {
 		["BLOCK"] = unitsFolder.blocks,
@@ -168,9 +168,9 @@ function PreviewController:Start(unitType: string, unitName: string): ()
 	CurrentItemName = unitName
 
 	local gridOrigin = PreviewController:GetStartBasePartPosition()
-	PreviewModel = PreviewController:GetItemFromTypeAndName(unitType, unitName)
+	PreviewModel = PreviewController:GetUnitTemplate(unitType, unitName)
 	PreviewModel.PrimaryPart.Transparency = 0.5
-	PreviewModel.PrimaryPart.CanCollide = false
+	PreviewModel.PrimaryPart.CanTouch = false
 	PreviewModel.PrimaryPart.CanCollide = false
 	PreviewModel.PrimaryPart.Anchored = true
 

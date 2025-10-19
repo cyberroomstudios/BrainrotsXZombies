@@ -17,7 +17,13 @@ local spikes = require(ReplicatedStorage.Enums.spikes)
 -- === ENUMS
 local Blocks = require(ReplicatedStorage.Enums.blocks)
 
+-- === CONSTANTS
 local CONTAINER_TYPES = { "BLOCK", "ENEMIES", "MELEE", "RANGED", "SPIKES" }
+local SLOT_ATTRIBUTE = "MAP_SLOT"
+local SUB_SLOT_ATTRIBUTE = "MAP_SUB_SLOT"
+local HP_ATTRIBUTE = "HP"
+local CURRENT_HP_ATTRIBUTE = "CURRENT_HP"
+local IS_BRAINROT_ATTRIBUTE = "IS_BRAINROT"
 
 -- === GLOBAL FUNCTIONS
 function MapService:Init(): () end
@@ -29,7 +35,7 @@ local unitTypesEnums = {
 	["SPIKES"] = spikes,
 }
 
-function MapService:AddItemInDataBase(
+function MapService:AddItemInDatabase(
 	player: Player,
 	itemType: string,
 	itemName: string,
@@ -50,7 +56,7 @@ function MapService:AddItemInDataBase(
 	end)
 end
 
-function MapService:GetItemFromTypeAndName(unitType: string, unitName: string): Model?
+function MapService:GetUnitTemplate(unitType: string, unitName: string): Model?
 	local unitsFolder: Folder = ReplicatedStorage.developer.units
 	local items = {
 		["BLOCK"] = unitsFolder.blocks,
@@ -89,31 +95,53 @@ function MapService:SetItemOnMap(
 		local subSlotPart = UtilService:WaitForDescendants(slotModel, subSlot)
 
 		local position = subSlotPart.Position
-		local item = MapService:GetItemFromTypeAndName(unitType, unitName)
+		local item = MapService:GetUnitTemplate(unitType, unitName)
 		local yOffset = (subSlotPart.Size.Y / 2) + (item.PrimaryPart.Size.Y / 2)
 
 		local baseIndex = tonumber(base.Name)
 		local rotation = CFrame.Angles(0, (baseIndex % 2 == 0 and 0 or math.rad(180)), 0)
 
 		item:PivotTo(CFrame.new(position + Vector3.new(0, yOffset, 0)) * rotation)
-		item:SetAttribute("IS_BRAINROT", isBrainrot)
-
-		item:SetAttribute("HP", unitTypesEnums[unitType][unitName].HP)
-		item:SetAttribute("CURRENT_HP", unitTypesEnums[unitType][unitName].HP)
+		item:SetAttribute(IS_BRAINROT_ATTRIBUTE, isBrainrot)
+		item:SetAttribute(HP_ATTRIBUTE, unitTypesEnums[unitType][unitName].HP)
+		item:SetAttribute(CURRENT_HP_ATTRIBUTE, unitTypesEnums[unitType][unitName].HP)
+		item:SetAttribute(SLOT_ATTRIBUTE, tostring(slot))
+		item:SetAttribute(SUB_SLOT_ATTRIBUTE, tostring(subSlot))
 		item.Parent = workspace.runtime[player.UserId][unitType]
-		
+
 		if item:FindFirstChild("XP") then
 			item:FindFirstChild("XP").Enabled = false
 		end
 		if isBrainrot then
 			-- Add animation if unit is Brainrot
-			-- Adiciona a animação se for brainrot
-			MapService:CreateWalkAnimation(item)
+			MapService:PlayIdleAnimation(item)
 		end
 	end
 end
 
-function MapService:CreateWalkAnimation(model: Model): ()
+function MapService:GetUnitInMap(
+	player: Player,
+	unitType: string,
+	unitName: string,
+	slot: number,
+	subSlot: number
+): Model?
+	local container = workspace.runtime[player.UserId][unitType]
+	local stringSlot = tostring(slot)
+	local stringSubSlot = tostring(subSlot)
+	for _, child in ipairs(container:GetChildren()) do
+		if child.Name == unitName then
+			local childSlot = child:GetAttribute(SLOT_ATTRIBUTE)
+			local childSubSlot = child:GetAttribute(SUB_SLOT_ATTRIBUTE)
+			if childSlot == stringSlot and childSubSlot == stringSubSlot then
+				return child
+			end
+		end
+	end
+	return nil
+end
+
+function MapService:PlayIdleAnimation(model: Model): ()
 	local AnimationController: AnimationController = model:FindFirstChild("AnimationController")
 	local idle = AnimationController:LoadAnimation(model.Animations.Idle)
 	idle.Priority = Enum.AnimationPriority.Idle
@@ -126,28 +154,50 @@ function MapService:RemoveItemFromMap(
 	itemName: string,
 	slot: number,
 	subSlot: number
-): ()
+): boolean
+	local instance: Model? = MapService:GetUnitInMap(player, itemType, itemName, slot, subSlot)
+	if instance then
+		instance:Destroy()
+	else
+		Debug.warn(
+			`Instance not found in workspace: {itemName} (slot {slot}, subSlot {subSlot}) of type {itemType} for player {player.Name}`
+		)
+		return false
+	end
+
+	local removed: boolean = false
 	PlayerDataHandler:Update(player, "itemsOnMap", function(current: table): table
 		for index, item in ipairs(current) do
-			if item.Type == itemType and item.Name == itemName and item.Slot == slot and item.SubSlot == subSlot then
+			if
+				item.Type == itemType
+				and item.Name == itemName
+				and item.Slot == tostring(slot)
+				and item.SubSlot == tostring(subSlot)
+			then
 				table.remove(current, index)
+				removed = true
 				break
 			end
 		end
 		return current
 	end)
 
-	local container = workspace.runtime[player.UserId][itemType]
-	local instance = container:FindFirstChild(itemName)
-	if instance then
-		instance:Destroy()
-	else
-		Debug.warn(`Instance not found in workspace: {itemName} of type {itemType} for player {player.Name}`)
-	end
+	return removed
 end
 
-function MapService:ClearMapItems(player: Player): ()
-	print("Clearing all map items for player:", player.Name)
+function MapService:ClearMapItems(player: Player): table
+	Debug.print("Clearing all map items for player:", player.Name)
+	local itemsOnMap = PlayerDataHandler:Get(player, "itemsOnMap")
+	local removedItems: table = {}
+	for _, item in ipairs(itemsOnMap) do
+		if not removedItems[item.Type] then
+			removedItems[item.Type] = {}
+		end
+		if not removedItems[item.Type][item.Name] then
+			removedItems[item.Type][item.Name] = 0
+		end
+		removedItems[item.Type][item.Name] += 1
+	end
 	PlayerDataHandler:Set(player, "itemsOnMap", {})
 	for _, itemType in ipairs(CONTAINER_TYPES) do
 		local container = workspace.runtime[player.UserId][itemType]
@@ -156,10 +206,12 @@ function MapService:ClearMapItems(player: Player): ()
 			item:Destroy()
 		end
 	end
+	return removedItems
 end
 
 function MapService:InitMapForPlayer(player: Player): ()
 	local items = PlayerDataHandler:Get(player, "itemsOnMap")
+	print("Initializing map for player:", player.Name, "with items:", items)
 	for _, item in items do
 		local itemType = item.Type
 		local itemName = item.Name
@@ -170,22 +222,15 @@ function MapService:InitMapForPlayer(player: Player): ()
 	end
 end
 
-function MapService:RestartBaseMap(player: Player)
-	local function clean(folderName: string)
-		local parts = workspace.runtime[player.UserId][folderName]:GetChildren()
-
-		for _, part in parts do
-			part:Destroy()
+function MapService:RestartBaseMap(player: Player): ()
+	for _, itemType in ipairs(CONTAINER_TYPES) do
+		local container = workspace.runtime[player.UserId][itemType]
+		local items = container:GetChildren()
+		for _, item in ipairs(items) do
+			item:Destroy()
 		end
 	end
-
-	clean("Enemys")
-	clean("RANGED")
-	clean("BLOCK")
-	clean("MELEE")
-	clean("SPIKES")
-
-	MapService:InitMapFromPlayer(player)
+	MapService:InitMapForPlayer(player)
 end
 
 return MapService
