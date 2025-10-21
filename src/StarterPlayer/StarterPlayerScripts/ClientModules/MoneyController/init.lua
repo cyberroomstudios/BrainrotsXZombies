@@ -17,7 +17,7 @@ end
 
 function MoneyController:CreateReferences()
 	-- Botões referente as Tools
-	moneyLabel = UIReferences:GetReference("MONEY")
+	moneyLabel = UIReferences:GetReference("MONEY_TEXT")
 	historyMoney = UIReferences:GetReference("HISTORY_MONEY")
 end
 
