@@ -1,9 +1,9 @@
 local ServerScriptService = game:GetService("ServerScriptService")
 
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
-local MoneyService = require(ServerScriptService.Modules.MoneyService)
+local BrainrotEggService = require(ServerScriptService.Modules.BrainrotEggService)
 
-return function(context, player, amount)
-	MoneyService:GiveMoney(player, amount)
+return function(context, player, type: string)
+	BrainrotEggService:GiveEgg(player, type)
 	return "Success!"
 end

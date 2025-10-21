@@ -12,6 +12,7 @@ local RemoveUnitController = require(ClientModules.RemoveUnitController)
 local SpikesController = require(ClientModules.SpikesController)
 local TeleportController = require(ClientModules.TeleportController)
 local WaveController = require(ClientModules.WaveController)
+local EggsAndCratesScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.EggsAndCratesScreenController)
 
 local storeButton
 local fightButton
@@ -25,6 +26,8 @@ local backpackFrame
 -- Bottom
 local OpenBackpackButton
 local OpenRemoveUnitButton
+local toolsButton
+local eggAndCratesButton
 
 function HudController:Init()
 	HudController:CreateReferences()
@@ -45,6 +48,9 @@ function HudController:CreateReferences()
 
 	OpenBackpackButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
 	OpenRemoveUnitButton = UIReferences:GetReference("REMOVE_UNIT_BUTTON_HUD")
+	toolsButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
+
+	eggAndCratesButton = UIReferences:GetReference("SHOW_EGG_AND_CRATES_BUTTON")
 end
 
 function HudController:InitButtonListerns()
@@ -81,6 +87,10 @@ function HudController:InitButtonListerns()
 		if RemoveUnitController:IsActive() and BackpackScreenController:IsOpen() then
 			BackpackScreenController:Close()
 		end
+	end)
+
+	eggAndCratesButton.MouseButton1Click:Connect(function()
+		EggsAndCratesScreenController:Open()
 	end)
 end
 

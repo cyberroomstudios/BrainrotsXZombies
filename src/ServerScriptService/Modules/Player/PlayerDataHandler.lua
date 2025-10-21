@@ -28,9 +28,10 @@ end
 local cachedJoinTimestamps = {}
 local dataTemplate = {
 	totalPlaytime = 0,
-	itemsOnMap = {},
-	unitsBackpack = {},
-	money = 0,
+	itemsOnMap = {}, -- Representa todos os itens que estão setados no mapa
+	unitsBackpack = {}, -- Representa todas as unidades que estão no backpack do jogador
+	brainrotEggsBackpack = {}, -- Representa todas as os ovos de brainrots que estão no backpack do jogador
+	money = 0, -- Representa o Dinheiro do jogador
 	restockCycle = 0,
 }
 
