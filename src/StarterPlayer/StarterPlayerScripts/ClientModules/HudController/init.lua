@@ -5,6 +5,7 @@ local player = Players.LocalPlayer
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local ClientModules = Players.LocalPlayer.PlayerScripts.ClientModules
 local BackpackScreenController = require(ClientModules.BackpackScreenController)
+local WeaponsBackpackScreenController = require(ClientModules.WeaponsBackpackScreenController)
 local MeleeThreadController = require(ClientModules.MeleeThreadController)
 local RangedController = require(ClientModules.RangedController)
 local RangedTowerController = require(ClientModules.RangedTowerController)
@@ -12,7 +13,14 @@ local RemoveUnitController = require(ClientModules.RemoveUnitController)
 local SpikesController = require(ClientModules.SpikesController)
 local TeleportController = require(ClientModules.TeleportController)
 local WaveController = require(ClientModules.WaveController)
-local EggsAndCratesScreenController = require(Players.LocalPlayer.PlayerScripts.ClientModules.EggsAndCratesScreenController)
+local EggsAndCratesScreenController =
+	require(Players.LocalPlayer.PlayerScripts.ClientModules.EggsAndCratesScreenController)
+
+local HUD_SCREENS = {
+	Backpack = BackpackScreenController,
+	WeaponsBackpack = WeaponsBackpackScreenController,
+	RemoveUnit = RemoveUnitController,
+}
 
 local storeButton
 local fightButton
@@ -24,8 +32,9 @@ local baseLife
 local backpackFrame
 
 -- Bottom
-local OpenBackpackButton
-local OpenRemoveUnitButton
+local OpenBackpackButton: GuiButton
+local OpenRemoveUnitButton: GuiButton
+local OpenWeaponsBackpackButton: GuiButton
 local toolsButton
 local eggAndCratesButton
 
@@ -48,6 +57,7 @@ function HudController:CreateReferences()
 
 	OpenBackpackButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
 	OpenRemoveUnitButton = UIReferences:GetReference("REMOVE_UNIT_BUTTON_HUD")
+	OpenWeaponsBackpackButton = UIReferences:GetReference("OPEN_WEAPONS_BACKPACK_HUD_BUTTON")
 	toolsButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
 
 	eggAndCratesButton = UIReferences:GetReference("SHOW_EGG_AND_CRATES_BUTTON")
@@ -73,20 +83,29 @@ function HudController:InitButtonListerns()
 		SpikesController:Start()
 	end)
 
-	OpenBackpackButton.MouseButton1Click:Connect(function(): ()
-		BackpackScreenController:ToggleVisibility()
-		-- TODO use a generic approach later, after implementing all the 4 hotbar buttons
-		if BackpackScreenController:IsOpen() and RemoveUnitController:IsActive() then
-			RemoveUnitController:Stop()
+	local function closeOthers(openedScreenController)
+		if openedScreenController:IsOpen() then
+			for _, screenController in pairs(HUD_SCREENS) do
+				if screenController ~= openedScreenController and screenController:IsOpen() then
+					screenController:Close()
+				end
+			end
 		end
+	end
+
+	OpenBackpackButton.MouseButton1Click:Connect(function(): ()
+		BackpackScreenController:Toggle()
+		closeOthers(BackpackScreenController)
 	end)
 
 	OpenRemoveUnitButton.MouseButton1Click:Connect(function(): ()
 		RemoveUnitController:Toggle()
-		-- TODO use a generic approach later, after implementing all the 4 hotbar buttons
-		if RemoveUnitController:IsActive() and BackpackScreenController:IsOpen() then
-			BackpackScreenController:Close()
-		end
+		closeOthers(RemoveUnitController)
+	end)
+
+	OpenWeaponsBackpackButton.MouseButton1Click:Connect(function(): ()
+		WeaponsBackpackScreenController:Toggle()
+		closeOthers(WeaponsBackpackScreenController)
 	end)
 
 	eggAndCratesButton.MouseButton1Click:Connect(function()

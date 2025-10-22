@@ -14,15 +14,31 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 
 -- === MODULES
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
+local BackpackScreenWrapper = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenWrapper)
 local PreviewController = require(Players.LocalPlayer.PlayerScripts.ClientModules.PreviewController)
 
 -- === LOCAL VARIABLES
-local Screen: Frame
-local ItemsContainer: Frame
-local ItemTemplate: TextButton
-local CloseButton: TextButton
-local RemoveAllButton: TextButton
-local Items: { [string]: { [string]: { Button: TextButton, QuantityLabel: TextLabel } } }
+local Wrapper: BackpackScreenWrapper.BackpackScreenWrapper?
+local RemoveAllButton: GuiButton?
+
+-- === LOCAL FUNCTIONS
+local function encode(unitType: string, unitName: string): string
+	return `{unitType}/{unitName}`
+end
+
+local function decode(key: string): (string, string)
+	local split = key:split("/")
+	return split[1], split[2]
+end
+
+-- === METATABLE --- Redirect module missing methods to Wrapper
+setmetatable(BackpackScreenController, {
+	__index = function(_, key)
+		return function(_, ...)
+			return Wrapper[key](Wrapper, ...)
+		end
+	end,
+})
 
 -- === GLOBAL FUNCTIONS
 function BackpackScreenController:Init(): ()
@@ -32,17 +48,28 @@ function BackpackScreenController:Init(): ()
 end
 
 function BackpackScreenController:CreateReferences(): ()
-	Screen = UIReferences:GetReference("BACKPACK_SCREEN")
-	ItemsContainer = UIReferences:GetReference("BACKPACK_ITEMS_CONTAINER")
-	ItemTemplate = ReplicatedStorage.GUI.Backpack.ITEM
-	CloseButton = UIReferences:GetReference("BACKPACK_CLOSE_BUTTON")
+	Wrapper = BackpackScreenWrapper.new(
+		UIReferences:GetReference("BACKPACK_SCREEN"),
+		UIReferences:GetReference("BACKPACK_ITEMS_CONTAINER"),
+		UIReferences:GetReference("BACKPACK_CLOSE_BUTTON"),
+		ReplicatedStorage.GUI.Backpack.ITEM
+	)
 	RemoveAllButton = UIReferences:GetReference("BACKPACK_REMOVE_ALL_BUTTON")
+	Wrapper.OnOpen = function(): ()
+		if not Wrapper.Items then
+			BackpackScreenController:BuildScreen()
+		end
+	end
+	Wrapper.OnClose = function(): ()
+		PreviewController:Stop()
+	end
 end
 
 function BackpackScreenController:InitButtonListeners(): ()
-	CloseButton.MouseButton1Click:Connect(function(): ()
-		BackpackScreenController:Close()
-	end)
+	Wrapper.OnItemActivated = function(key: string): ()
+		local unitType, unitName = decode(key)
+		PreviewController:Start(unitType, unitName)
+	end
 	RemoveAllButton.MouseButton1Click:Connect(function(): ()
 		PreviewController:RemoveAllItems()
 	end)
@@ -54,78 +81,36 @@ function BackpackScreenController:InitBridgeListener(): ()
 			return
 		end
 		local action = response[actionIdentifier]
-		if action == "ItemQuantityChanged" then
+		if action == "ItemQuantityChanged" or action == "ItemAdded" then
 			local unitName: string = response.UnitName
 			local unitType: string = response.UnitType
 			local amount: number = response.Amount
-			BackpackScreenController:SetItemQuantity(unitType, unitName, amount)
-		elseif action == "ItemAdded" then
-			local unitName: string = response.UnitName
-			local unitType: string = response.UnitType
-			local amount: number = response.Amount
-			BackpackScreenController:SetItemQuantity(unitType, unitName, amount)
+			Wrapper:SetItemQuantity(encode(unitType, unitName), amount)
 		end
 	end)
 end
 
-function BackpackScreenController:ToggleVisibility(): ()
-	if Screen.Visible then
-		BackpackScreenController:Close()
-	else
-		BackpackScreenController:Open()
-	end
-end
-
-function BackpackScreenController:Open(): ()
-	Screen.Visible = true
-	if Items == nil then
-		BackpackScreenController:BuildScreen()
-	end
-end
-
-function BackpackScreenController:Close(): ()
-	Screen.Visible = false
-	PreviewController:Stop()
-end
-
-function BackpackScreenController:IsOpen(): boolean
-	return Screen ~= nil and Screen.Visible
-end
-
 function BackpackScreenController:BuildScreen(): ()
+	if Wrapper.Items then
+		return
+	end
 	local result = bridge:InvokeServerAsync({
 		[actionIdentifier] = "GetAllUnits",
 		data = {},
 	})
-	Items = {}
-	for _, unit in pairs(result) do
-		BackpackScreenController:CreateItem(unit.UnitType, unit.UnitName, unit.Amount)
-	end
-end
-
-function BackpackScreenController:CreateItem(unitType: string, unitName: string, amount: number): ()
-	if Items and Items[unitType] and Items[unitType][unitName] then
-		warn(`UNEXPECTED: There's already a unit of type {unitType} with name {unitName} in the backpack.`)
+	if typeof(result) ~= "table" then
+		warn("BackpackScreenController: unexpected response while building screen.")
 		return
 	end
-	local itemButton: TextButton = ItemTemplate:Clone()
-	itemButton.Parent = ItemsContainer
-	itemButton.Visible = true
-	itemButton.MouseButton1Click:Connect(function(): ()
-		PreviewController:Start(unitType, unitName)
-	end)
-	local quantityLabel: TextLabel = itemButton:FindFirstChild("Quantity", true)
-	quantityLabel.Text = `x{amount}`
-	Items[unitType] = Items[unitType] or {}
-	Items[unitType][unitName] = { Button = itemButton, QuantityLabel = quantityLabel }
-end
-
-function BackpackScreenController:SetItemQuantity(unitType: string, unitName: string, amount: number): ()
-	if Items and Items[unitType] and Items[unitType][unitName] then
-		Items[unitType][unitName].QuantityLabel.Text = `x{amount}`
-	else
-		print(`Skipped updating {unitType}/{unitName} quantity because it does not exist in the backpack UI.`)
+	local entries: { BackpackScreenWrapper.Entry } = {}
+	for _, item in pairs(result) do
+		table.insert(entries, {
+			Key = encode(item.UnitType, item.UnitName),
+			Amount = item.Amount,
+		})
 	end
+	print("Entries:", entries)
+	Wrapper:BuildItems(entries)
 end
 
 return BackpackScreenController

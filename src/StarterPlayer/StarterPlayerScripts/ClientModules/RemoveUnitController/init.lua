@@ -160,8 +160,8 @@ function RemoveUnitController:Init(): ()
 	ensureRuntimeFolder()
 end
 
-function RemoveUnitController:Start(): ()
-	RemoveUnitController:Stop()
+function RemoveUnitController:Open(): ()
+	RemoveUnitController:Close()
 	if not ensureRuntimeFolder() then
 		Debug.warn("Cannot start RemoveUnitController without runtime folder")
 		return
@@ -171,7 +171,7 @@ function RemoveUnitController:Start(): ()
 	InputConnection = UserInputService.InputEnded:Connect(onInputEnded)
 end
 
-function RemoveUnitController:Stop(): ()
+function RemoveUnitController:Close(): ()
 	if RenderConnection then
 		RenderConnection:Disconnect()
 		RenderConnection = nil
@@ -183,16 +183,16 @@ function RemoveUnitController:Stop(): ()
 	clearHover()
 end
 
-function RemoveUnitController:Toggle(): ()
-	if RemoveUnitController:IsActive() then
-		RemoveUnitController:Stop()
-	else
-		RemoveUnitController:Start()
-	end
+function RemoveUnitController:IsOpen(): boolean
+	return RenderConnection ~= nil
 end
 
-function RemoveUnitController:IsActive(): boolean
-	return RenderConnection ~= nil
+function RemoveUnitController:Toggle(): ()
+	if RemoveUnitController:IsOpen() then
+		RemoveUnitController:Close()
+	else
+		RemoveUnitController:Open()
+	end
 end
 
 return RemoveUnitController
