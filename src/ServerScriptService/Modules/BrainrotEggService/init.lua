@@ -10,6 +10,7 @@ local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataH
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local BaseService = require(ServerScriptService.Modules.BaseService)
 local bridge = BridgeNet2.ReferenceBridge("BrainrotEggService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -48,6 +49,24 @@ end
 
 function BrainrotEggService:GetEggsFromBackpack(player: Player)
 	return PlayerDataHandler:Get(player, "brainrotEggsBackpack")
+end
+
+function BrainrotEggService:GetNextEggSlotMap(player: Player)
+	local base = BaseService:GetBase(player)
+	local platforms = base:WaitForChild("platforms")
+	local eggFolder = platforms:WaitForChild("egg")
+
+	if eggFolder then
+		local plots = eggFolder:GetChildren()
+
+		for _, value in plots do
+		end
+	end
+end
+
+function BrainrotEggService:SetEggInMap(player: Player)
+
+	--local platforms
 end
 
 return BrainrotEggService
