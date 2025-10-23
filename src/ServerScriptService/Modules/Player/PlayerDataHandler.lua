@@ -33,6 +33,8 @@ local dataTemplate = {
 	brainrotEggsBackpack = {}, -- Representa todas as os ovos de brainrots que estão no backpack do jogador
 	money = 0, -- Representa o Dinheiro do jogador
 	restockCycle = 0,
+	maxWave = 0, -- Representa a onda máxima que aquele jogador chegou
+	robuxSpent = 0, -- Representa a quantidade de robux gasto pelo jogador
 }
 
 local ProfileService = require(ServerScriptService.libs.ProfileService)
