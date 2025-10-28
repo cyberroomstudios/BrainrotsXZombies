@@ -671,6 +671,15 @@ function StockService:ProcessReceipt(receiptInfo: table): Enum.ProductPurchaseDe
 		return Enum.ProductPurchaseDecision.NotProcessedYet
 	end
 
+	if receiptInfo.CurrencyType == Enum.CurrencyType.Robux then
+		print(
+			`StockService: ProcessReceipt - Recording Robux spent for PlayerId {playerId}, ProductId {productId}, Amount {receiptInfo.CurrencySpent}`
+		)
+		PlayerDataHandler:Update(player, "robuxSpent", function(current: number): number
+			return current + receiptInfo.CurrencySpent
+		end)
+	end
+
 	return Enum.ProductPurchaseDecision.PurchaseGranted
 end
 
