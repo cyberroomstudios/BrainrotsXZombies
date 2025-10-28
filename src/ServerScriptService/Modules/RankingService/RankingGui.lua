@@ -1,30 +1,56 @@
 local RankingGui = {}
 RankingGui.__index = RankingGui
 
+-- === CUSTOM TYPES
 export type RankingEntry = {
-	UserId: number | string,
+	UserId: number,
 	Value: number,
 }
 
-type Options = {
+export type Options = {
 	rankingType: string?,
 	title: string?,
 	maxEntries: number?,
 	nameResolver: ((number) -> string)?,
+	headerBackgroundColor: Color3?,
+	headerBackgroundTransparency: number?,
+	columnBackgroundColor: Color3?,
+	columnBackgroundTransparency: number?,
+	rowBackgroundColor: Color3?,
+	rowBackgroundTransparency: number?,
+	rowHighlightBackgroundColor: Color3?,
+	rowHighlightBackgroundTransparency: number?,
+	titleTextColor: Color3?,
+	columnHeaderTextColor: Color3?,
+	rowTextColor: Color3?,
+	emptyStateTextColor: Color3?,
 }
 
-local DEFAULT_MAX_ENTRIES = 10
-local HEADER_HEIGHT = 64
-local COLUMN_HEADER_HEIGHT = 40
-local ROW_HEIGHT = 48
-local TITLE_TEXT_SIZE = 36
-local COLUMN_TEXT_SIZE = 22
-local ROW_TEXT_SIZE = 24
-local EMPTY_TEXT_SIZE = 22
+-- === CONSTANTS
+local DEFAULT_MAX_ENTRIES: number = 10
+local HEADER_HEIGHT: number = 64
+local COLUMN_HEADER_HEIGHT: number = 40
+local ROW_HEIGHT: number = 48
+local TITLE_TEXT_SIZE: number = 36
+local COLUMN_TEXT_SIZE: number = 22
+local ROW_TEXT_SIZE: number = 24
+local EMPTY_TEXT_SIZE: number = 22
+local DEFAULT_HEADER_BACKGROUND_COLOR = Color3.fromRGB(20, 20, 20)
+local DEFAULT_HEADER_BACKGROUND_TRANSPARENCY = 0.2
+local DEFAULT_COLUMN_BACKGROUND_COLOR = DEFAULT_HEADER_BACKGROUND_COLOR
+local DEFAULT_COLUMN_BACKGROUND_TRANSPARENCY = 0.3
+local DEFAULT_ROW_BACKGROUND_COLOR = Color3.fromRGB(25, 25, 25)
+local DEFAULT_ROW_BACKGROUND_TRANSPARENCY = 0.4
+local DEFAULT_ROW_HIGHLIGHT_BACKGROUND_COLOR = Color3.fromRGB(64, 128, 255)
+local DEFAULT_ROW_HIGHLIGHT_BACKGROUND_TRANSPARENCY = 0.2
+local DEFAULT_TITLE_TEXT_COLOR = Color3.fromRGB(255, 255, 255)
+local DEFAULT_COLUMN_HEADER_TEXT_COLOR = Color3.fromRGB(200, 200, 200)
+local DEFAULT_ROW_TEXT_COLOR = DEFAULT_TITLE_TEXT_COLOR
+local DEFAULT_EMPTY_STATE_TEXT_COLOR = Color3.fromRGB(180, 180, 180)
 
+-- === CONSTRUCTOR
 function RankingGui.new(surfaceGui: SurfaceGui, options: Options?)
 	assert(surfaceGui and surfaceGui:IsA("SurfaceGui"), "RankingGui.new expects a SurfaceGui instance")
-
 	options = options or {}
 
 	local self = setmetatable({}, RankingGui)
@@ -35,6 +61,19 @@ function RankingGui.new(surfaceGui: SurfaceGui, options: Options?)
 	self.title = options.title or self.rankingType
 	self.items = {}
 	self.emptyLabel = nil
+	self.headerBackgroundColor = options.headerBackgroundColor or DEFAULT_HEADER_BACKGROUND_COLOR
+	self.headerBackgroundTransparency = options.headerBackgroundTransparency or DEFAULT_HEADER_BACKGROUND_TRANSPARENCY
+	self.columnBackgroundColor = options.columnBackgroundColor or self.headerBackgroundColor or DEFAULT_COLUMN_BACKGROUND_COLOR
+	self.columnBackgroundTransparency = options.columnBackgroundTransparency or DEFAULT_COLUMN_BACKGROUND_TRANSPARENCY
+	self.rowBackgroundColor = options.rowBackgroundColor or DEFAULT_ROW_BACKGROUND_COLOR
+	self.rowBackgroundTransparency = options.rowBackgroundTransparency or DEFAULT_ROW_BACKGROUND_TRANSPARENCY
+	self.rowHighlightBackgroundColor = options.rowHighlightBackgroundColor or DEFAULT_ROW_HIGHLIGHT_BACKGROUND_COLOR
+	self.rowHighlightBackgroundTransparency = options.rowHighlightBackgroundTransparency
+		or DEFAULT_ROW_HIGHLIGHT_BACKGROUND_TRANSPARENCY
+	self.titleTextColor = options.titleTextColor or DEFAULT_TITLE_TEXT_COLOR
+	self.columnHeaderTextColor = options.columnHeaderTextColor or DEFAULT_COLUMN_HEADER_TEXT_COLOR
+	self.rowTextColor = options.rowTextColor or DEFAULT_ROW_TEXT_COLOR
+	self.emptyStateTextColor = options.emptyStateTextColor or DEFAULT_EMPTY_STATE_TEXT_COLOR
 
 	surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
@@ -69,20 +108,21 @@ function RankingGui.new(surfaceGui: SurfaceGui, options: Options?)
 		self.layout.Parent = self.container
 	end
 
-	self:createHeader()
+	self:CreateHeader()
 
 	return self
 end
 
-function RankingGui:createHeader(): ()
+-- === GLOBAL FUNCTIONS
+function RankingGui:CreateHeader(): ()
 	local header = self.container:FindFirstChild("Header")
 	if not header then
 		header = Instance.new("Frame")
 		header.Name = "Header"
 		header.Parent = self.container
 	end
-	header.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
-	header.BackgroundTransparency = 0.2
+	header.BackgroundColor3 = self.headerBackgroundColor
+	header.BackgroundTransparency = self.headerBackgroundTransparency
 	header.BorderSizePixel = 0
 	header.LayoutOrder = 0
 	header.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
@@ -116,7 +156,7 @@ function RankingGui:createHeader(): ()
 	titleLabel.Font = Enum.Font.GothamBold
 	titleLabel.TextScaled = false
 	titleLabel.TextSize = TITLE_TEXT_SIZE
-	titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+	titleLabel.TextColor3 = self.titleTextColor
 	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 	titleLabel.TextYAlignment = Enum.TextYAlignment.Center
 
@@ -126,8 +166,8 @@ function RankingGui:createHeader(): ()
 		columnHeader.Name = "ColumnLabels"
 		columnHeader.Parent = self.container
 	end
-	columnHeader.BackgroundTransparency = 0.3
-	columnHeader.BackgroundColor3 = Color3.fromRGB(20, 20, 20)
+	columnHeader.BackgroundTransparency = self.columnBackgroundTransparency
+	columnHeader.BackgroundColor3 = self.columnBackgroundColor
 	columnHeader.BorderSizePixel = 0
 	columnHeader.LayoutOrder = 1
 	columnHeader.Size = UDim2.new(1, 0, 0, COLUMN_HEADER_HEIGHT)
@@ -145,7 +185,7 @@ function RankingGui:createHeader(): ()
 		columnPadding.Parent = columnHeader
 	end
 	columnPadding.PaddingLeft = UDim.new(0, 16)
-	columnPadding.PaddingRight = UDim.new(0, 16)
+	columnPadding.PaddingRight = UDim.new(0, 24)
 
 	local rowLayout = columnHeader:FindFirstChildOfClass("UIListLayout")
 	if not rowLayout then
@@ -177,7 +217,7 @@ function RankingGui:createHeader(): ()
 		label.Size = size
 		label.Font = Enum.Font.GothamBold
 		label.Text = text
-		label.TextColor3 = Color3.fromRGB(200, 200, 200)
+		label.TextColor3 = self.columnHeaderTextColor
 		label.TextScaled = false
 		label.TextSize = COLUMN_TEXT_SIZE
 		label.TextXAlignment = alignment
@@ -190,7 +230,7 @@ function RankingGui:createHeader(): ()
 	ensureColumn("Value", "VALUE", UDim2.new(0.3, 0, 1, 0), Enum.TextXAlignment.Right, 3)
 end
 
-function RankingGui:createEmptyState(): TextLabel
+function RankingGui:CreateEmptyState(): TextLabel
 	local label = Instance.new("TextLabel")
 	label.Name = "EmptyState"
 	label.BackgroundTransparency = 1
@@ -199,7 +239,7 @@ function RankingGui:createEmptyState(): TextLabel
 	label.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
 	label.Font = Enum.Font.Gotham
 	label.Text = "No data yet"
-	label.TextColor3 = Color3.fromRGB(180, 180, 180)
+	label.TextColor3 = self.emptyStateTextColor
 	label.TextScaled = false
 	label.TextSize = EMPTY_TEXT_SIZE
 	label.TextXAlignment = Enum.TextXAlignment.Center
@@ -208,7 +248,7 @@ function RankingGui:createEmptyState(): TextLabel
 	return label
 end
 
-function RankingGui:resolveName(userId: number?): string
+function RankingGui:ResolveName(userId: number?): string
 	if userId == nil then
 		return "Unknown"
 	end
@@ -223,7 +263,7 @@ function RankingGui:resolveName(userId: number?): string
 	return tostring(userId)
 end
 
-function RankingGui:formatValue(value: number): string
+function RankingGui:FormatValue(value: number): string
 	if typeof(value) ~= "number" then
 		return tostring(value)
 	end
@@ -231,11 +271,11 @@ function RankingGui:formatValue(value: number): string
 	return tostring(value)
 end
 
-function RankingGui:createRow(index: number, displayName: string, value: number, highlight: boolean): Frame
+function RankingGui:CreateRow(index: number, displayName: string, value: number, highlight: boolean): Frame
 	local row = Instance.new("Frame")
 	row.Name = `Row_{index}`
-	row.BackgroundTransparency = highlight and 0.2 or 0.4
-	row.BackgroundColor3 = highlight and Color3.fromRGB(64, 128, 255) or Color3.fromRGB(25, 25, 25)
+	row.BackgroundTransparency = highlight and self.rowHighlightBackgroundTransparency or self.rowBackgroundTransparency
+	row.BackgroundColor3 = highlight and self.rowHighlightBackgroundColor or self.rowBackgroundColor
 	row.BorderSizePixel = 0
 	row.LayoutOrder = index + 1
 	row.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
@@ -246,7 +286,7 @@ function RankingGui:createRow(index: number, displayName: string, value: number,
 
 	local padding = Instance.new("UIPadding")
 	padding.PaddingLeft = UDim.new(0, 16)
-	padding.PaddingRight = UDim.new(0, 16)
+	padding.PaddingRight = UDim.new(0, 24)
 	padding.Parent = row
 
 	local layout = Instance.new("UIListLayout")
@@ -272,7 +312,7 @@ function RankingGui:createRow(index: number, displayName: string, value: number,
 		label.Size = size
 		label.Font = isBold and Enum.Font.GothamBold or font
 		label.Text = text
-		label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		label.TextColor3 = self.rowTextColor
 		label.TextScaled = false
 		label.TextSize = ROW_TEXT_SIZE
 		label.TextXAlignment = alignment
@@ -285,7 +325,7 @@ function RankingGui:createRow(index: number, displayName: string, value: number,
 	createLabel("Player", displayName, UDim2.new(0.5, 0, 1, 0), Enum.TextXAlignment.Left, Enum.Font.Gotham, false)
 	createLabel(
 		"Value",
-		self:formatValue(value),
+		self:FormatValue(value),
 		UDim2.new(0.3, 0, 1, 0),
 		Enum.TextXAlignment.Right,
 		Enum.Font.Gotham,
@@ -309,7 +349,7 @@ function RankingGui:SetEntries(entries: { RankingEntry }, highlightUserId: numbe
 	end
 
 	if #entries == 0 then
-		self.emptyLabel = self:createEmptyState()
+		self.emptyLabel = self:CreateEmptyState()
 		return
 	end
 
@@ -319,8 +359,8 @@ function RankingGui:SetEntries(entries: { RankingEntry }, highlightUserId: numbe
 	for index = 1, limit do
 		local entry = entries[index]
 		local userIdNumber = tonumber(entry.UserId)
-		local displayName = self:resolveName(userIdNumber)
-		local row = self:createRow(index, displayName, entry.Value, highlightId ~= nil and highlightId == userIdNumber)
+		local displayName = self:ResolveName(userIdNumber)
+		local row = self:CreateRow(index, displayName, entry.Value, highlightId ~= nil and highlightId == userIdNumber)
 		row.Parent = self.container
 		table.insert(self.items, row)
 	end
