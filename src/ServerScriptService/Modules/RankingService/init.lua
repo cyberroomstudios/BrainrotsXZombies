@@ -118,7 +118,7 @@ local function shouldUpdateScore(
 		if currentValue == newValue then
 			return false
 		end
-		if not RankingType.Compare(rankingType, currentValue, newValue) then
+		if RankingType.LockBestValue(rankingType) and not RankingType.Compare(rankingType, currentValue, newValue) then
 			return false
 		end
 	elseif not success then
