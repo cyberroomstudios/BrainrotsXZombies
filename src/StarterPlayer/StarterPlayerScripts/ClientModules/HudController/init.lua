@@ -19,9 +19,10 @@ local EggsAndCratesScreenController =
 local Tags = require(ReplicatedStorage.Enums.Tags)
 
 local HUD_SCREENS = {
-	Backpack = UnitsBackpackScreenController,
-	WeaponsBackpack = WeaponsBackpackScreenController,
+	UnitsBackpack = UnitsBackpackScreenController,
 	RemoveUnit = RemoveUnitController,
+	WeaponsBackpack = WeaponsBackpackScreenController,
+	EggsAndCrates = EggsAndCratesScreenController,
 }
 
 local storeButton
@@ -108,8 +109,9 @@ function HudController:InitButtonListerns()
 		closeOthers(WeaponsBackpackScreenController)
 	end)
 
-	eggAndCratesButton.MouseButton1Click:Connect(function()
-		EggsAndCratesScreenController:Open()
+	eggAndCratesButton.MouseButton1Click:Connect(function(): ()
+		EggsAndCratesScreenController:Toggle()
+		closeOthers(EggsAndCratesScreenController)
 	end)
 end
 

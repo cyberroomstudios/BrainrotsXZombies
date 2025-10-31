@@ -30,6 +30,22 @@ function EggsAndCratesScreenController:Open()
 	EggsAndCratesScreenController:BuildEggs()
 end
 
+function EggsAndCratesScreenController:Close()
+	screen.Visible = false
+end
+
+function EggsAndCratesScreenController:IsOpen(): boolean
+	return screen.Visible
+end
+
+function EggsAndCratesScreenController:Toggle()
+	if EggsAndCratesScreenController:IsOpen() then
+		EggsAndCratesScreenController:Close()
+	else
+		EggsAndCratesScreenController:Open()
+	end
+end
+
 function EggsAndCratesScreenController:BuildEggs()
 	local result = bridge:InvokeServerAsync({
 		[actionIdentifier] = "GetEggs",
