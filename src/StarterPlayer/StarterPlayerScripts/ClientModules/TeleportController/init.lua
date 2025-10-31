@@ -15,7 +15,7 @@ function TeleportController:ToBase()
 	end
 end
 
-function TeleportController:ToBaseStore()
+function TeleportController:ToBaseShop()
 	local spawnCFrame = player:GetAttribute("SPAWN_BASE_STORE_CFRAME")
 
 	local character = player.Character

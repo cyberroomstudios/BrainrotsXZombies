@@ -12,6 +12,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 local Players = game:GetService("Players")
 
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 local screen
 
@@ -21,7 +22,7 @@ end
 
 function EggsAndCratesScreenController:CreateReferences()
 	-- Botões referentes aos Teleports
-	screen = UIReferences:GetReference("EGGS_AND_CRATES")
+	screen = UIReferences:GetReference(Tags.EGGS_AND_CRATES_SCREEN)
 end
 
 function EggsAndCratesScreenController:Open()

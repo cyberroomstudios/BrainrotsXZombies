@@ -1,9 +1,11 @@
 local MoneyController = {}
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 local player = Players.LocalPlayer
 
@@ -17,8 +19,8 @@ end
 
 function MoneyController:CreateReferences()
 	-- Botões referente as Tools
-	moneyLabel = UIReferences:GetReference("MONEY_TEXT")
-	historyMoney = UIReferences:GetReference("HISTORY_MONEY")
+	moneyLabel = UIReferences:GetReference(Tags.HUD_MONEY_TEXT)
+	historyMoney = UIReferences:GetReference(Tags.HUD_MONEY_HISTORY)
 end
 
 function MoneyController:InitAttributeListener()

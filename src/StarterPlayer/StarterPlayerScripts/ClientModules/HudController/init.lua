@@ -1,10 +1,11 @@
 local HudController = {}
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local player = Players.LocalPlayer
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local ClientModules = Players.LocalPlayer.PlayerScripts.ClientModules
-local BackpackScreenController = require(ClientModules.BackpackScreenController)
+local UnitsBackpackScreenController = require(ClientModules.UnitsBackpackScreenController)
 local WeaponsBackpackScreenController = require(ClientModules.WeaponsBackpackScreenController)
 local MeleeThreadController = require(ClientModules.MeleeThreadController)
 local RangedController = require(ClientModules.RangedController)
@@ -15,9 +16,10 @@ local TeleportController = require(ClientModules.TeleportController)
 local WaveController = require(ClientModules.WaveController)
 local EggsAndCratesScreenController =
 	require(Players.LocalPlayer.PlayerScripts.ClientModules.EggsAndCratesScreenController)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 local HUD_SCREENS = {
-	Backpack = BackpackScreenController,
+	Backpack = UnitsBackpackScreenController,
 	WeaponsBackpack = WeaponsBackpackScreenController,
 	RemoveUnit = RemoveUnitController,
 }
@@ -29,7 +31,6 @@ local baseButton
 
 local currentWave
 local baseLife
-local backpackFrame
 
 -- Bottom
 local OpenBackpackButton: GuiButton
@@ -46,26 +47,25 @@ end
 
 function HudController:CreateReferences()
 	-- Botões referentes aos Teleports
-	storeButton = UIReferences:GetReference("STORE_BUTTON_HUD")
-	fightButton = UIReferences:GetReference("FIGHT_BUTTON_HUD")
-	stopButton = UIReferences:GetReference("STOP_BUTTON_HUD")
-	baseButton = UIReferences:GetReference("BASE_BUTTON_HUD")
+	storeButton = UIReferences:GetReference(Tags.HUD_BUTTON_SHOP)
+	fightButton = UIReferences:GetReference(Tags.HUD_BUTTON_FIGHT)
+	stopButton = UIReferences:GetReference(Tags.HUD_BUTTON_STOP_FIGHT)
+	baseButton = UIReferences:GetReference(Tags.HUD_BUTTON_BASE)
 
-	currentWave = UIReferences:GetReference("CURRENT_WAVE_HUD")
-	baseLife = UIReferences:GetReference("BASE_LIFE_HUD")
-	backpackFrame = UIReferences:GetReference("BACKPACK_HUD")
+	currentWave = UIReferences:GetReference(Tags.HUD_WAVE_CONTAINER)
+	baseLife = UIReferences:GetReference(Tags.HUD_HEALTH_CONTAINER)
 
-	OpenBackpackButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
-	OpenRemoveUnitButton = UIReferences:GetReference("REMOVE_UNIT_BUTTON_HUD")
-	OpenWeaponsBackpackButton = UIReferences:GetReference("OPEN_WEAPONS_BACKPACK_HUD_BUTTON")
-	toolsButton = UIReferences:GetReference("SHOW_TOOLS_BUTTON_HUD")
+	OpenBackpackButton = UIReferences:GetReference(Tags.HUD_HOTBAR_BUTTON_UNITS_BACKPACK)
+	OpenRemoveUnitButton = UIReferences:GetReference(Tags.HUD_HOTBAR_BUTTON_REMOVE_UNIT)
+	OpenWeaponsBackpackButton = UIReferences:GetReference(Tags.HUD_HOTBAR_BUTTON_WEAPONS_BACKPACK)
+	toolsButton = UIReferences:GetReference(Tags.HUD_HOTBAR_BUTTON_UNITS_BACKPACK)
 
-	eggAndCratesButton = UIReferences:GetReference("SHOW_EGG_AND_CRATES_BUTTON")
+	eggAndCratesButton = UIReferences:GetReference(Tags.HUD_HOTBAR_BUTTON_EGGS_AND_CRATES)
 end
 
 function HudController:InitButtonListerns()
 	storeButton.MouseButton1Click:Connect(function()
-		TeleportController:ToBaseStore()
+		TeleportController:ToBaseShop()
 	end)
 
 	baseButton.MouseButton1Click:Connect(function()
@@ -94,8 +94,8 @@ function HudController:InitButtonListerns()
 	end
 
 	OpenBackpackButton.MouseButton1Click:Connect(function(): ()
-		BackpackScreenController:Toggle()
-		closeOthers(BackpackScreenController)
+		UnitsBackpackScreenController:Toggle()
+		closeOthers(UnitsBackpackScreenController)
 	end)
 
 	OpenRemoveUnitButton.MouseButton1Click:Connect(function(): ()
@@ -121,7 +121,6 @@ function HudController:InitGameStatusListener()
 			fightButton.Visible = false
 			baseButton.Visible = false
 			storeButton.Visible = false
-			backpackFrame.Visible = false
 
 			stopButton.Visible = true
 			currentWave.Visible = true
@@ -130,7 +129,6 @@ function HudController:InitGameStatusListener()
 			fightButton.Visible = true
 			baseButton.Visible = true
 			storeButton.Visible = true
-			backpackFrame.Visible = true
 
 			stopButton.Visible = false
 			currentWave.Visible = false

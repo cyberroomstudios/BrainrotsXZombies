@@ -1,4 +1,4 @@
-local BackpackScreenController = {}
+local UnitsBackpackScreenController = {}
 
 -- === SERVICES
 local Players = game:GetService("Players")
@@ -16,6 +16,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local BackpackScreenWrapper = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenWrapper)
 local PreviewController = require(Players.LocalPlayer.PlayerScripts.ClientModules.PreviewController)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 -- === LOCAL VARIABLES
 local Wrapper: BackpackScreenWrapper.BackpackScreenWrapper?
@@ -32,7 +33,7 @@ local function decode(key: string): (string, string)
 end
 
 -- === METATABLE --- Redirect module missing methods to Wrapper
-setmetatable(BackpackScreenController, {
+setmetatable(UnitsBackpackScreenController, {
 	__index = function(_, key)
 		return function(_, ...)
 			return Wrapper[key](Wrapper, ...)
@@ -41,23 +42,23 @@ setmetatable(BackpackScreenController, {
 })
 
 -- === GLOBAL FUNCTIONS
-function BackpackScreenController:Init(): ()
-	BackpackScreenController:CreateReferences()
-	BackpackScreenController:InitButtonListeners()
-	BackpackScreenController:InitBridgeListener()
+function UnitsBackpackScreenController:Init(): ()
+	UnitsBackpackScreenController:CreateReferences()
+	UnitsBackpackScreenController:InitButtonListeners()
+	UnitsBackpackScreenController:InitBridgeListener()
 end
 
-function BackpackScreenController:CreateReferences(): ()
+function UnitsBackpackScreenController:CreateReferences(): ()
 	Wrapper = BackpackScreenWrapper.new(
-		UIReferences:GetReference("BACKPACK_SCREEN"),
-		UIReferences:GetReference("BACKPACK_ITEMS_CONTAINER"),
-		UIReferences:GetReference("BACKPACK_CLOSE_BUTTON"),
+		UIReferences:GetReference(Tags.UNITS_BACKPACK_SCREEN),
+		UIReferences:GetReference(Tags.UNITS_BACKPACK_ITEMS_CONTAINER),
+		UIReferences:GetReference(Tags.UNITS_BACKPACK_CLOSE_BUTTON),
 		ReplicatedStorage.GUI.Backpack.ITEM
 	)
-	RemoveAllButton = UIReferences:GetReference("BACKPACK_REMOVE_ALL_BUTTON")
+	RemoveAllButton = UIReferences:GetReference(Tags.UNITS_BACKPACK_REMOVE_ALL_BUTTON)
 	Wrapper.OnOpen = function(): ()
 		if not Wrapper.Items then
-			BackpackScreenController:BuildScreen()
+			UnitsBackpackScreenController:BuildScreen()
 		end
 	end
 	Wrapper.OnClose = function(): ()
@@ -65,7 +66,7 @@ function BackpackScreenController:CreateReferences(): ()
 	end
 end
 
-function BackpackScreenController:InitButtonListeners(): ()
+function UnitsBackpackScreenController:InitButtonListeners(): ()
 	Wrapper.OnItemActivated = function(key: string): ()
 		local unitType, unitName = decode(key)
 		PreviewController:Start(unitType, unitName)
@@ -75,7 +76,7 @@ function BackpackScreenController:InitButtonListeners(): ()
 	end)
 end
 
-function BackpackScreenController:InitBridgeListener(): ()
+function UnitsBackpackScreenController:InitBridgeListener(): ()
 	bridge:Connect(function(response: table): ()
 		if typeof(response) ~= "table" then
 			return
@@ -90,7 +91,7 @@ function BackpackScreenController:InitBridgeListener(): ()
 	end)
 end
 
-function BackpackScreenController:BuildScreen(): ()
+function UnitsBackpackScreenController:BuildScreen(): ()
 	if Wrapper.Items then
 		return
 	end
@@ -99,7 +100,7 @@ function BackpackScreenController:BuildScreen(): ()
 		data = {},
 	})
 	if typeof(result) ~= "table" then
-		warn("BackpackScreenController: unexpected response while building screen.")
+		warn("UnitsBackpackScreenController: unexpected response while building screen.")
 		return
 	end
 	local entries: { BackpackScreenWrapper.Entry } = {}
@@ -113,4 +114,4 @@ function BackpackScreenController:BuildScreen(): ()
 	Wrapper:BuildItems(entries)
 end
 
-return BackpackScreenController
+return UnitsBackpackScreenController

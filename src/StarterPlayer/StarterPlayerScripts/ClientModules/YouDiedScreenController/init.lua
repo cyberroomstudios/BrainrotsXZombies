@@ -4,6 +4,7 @@ local YouDiedScreenController = {}
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 local bridge = BridgeNet2.ReferenceBridge("DiedService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -25,8 +26,8 @@ end
 
 function YouDiedScreenController:CreateReferences()
 	-- Botões referentes aos Teleports
-	screen = UIReferences:GetReference("YOU_DIED_FRAME")
-	closeButton = UIReferences:GetReference("CLOSE_YOU_DIED_FRAME")
+	screen = UIReferences:GetReference(Tags.YOU_DIED_SCREEN)
+	closeButton = UIReferences:GetReference(Tags.YOU_DIED_BUTTON_CLOSE)
 end
 
 function YouDiedScreenController:InitBridgeListener()

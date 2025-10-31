@@ -2,9 +2,11 @@ local BaseController = {}
 
 local Players = game:GetService("Players")
 local TweenService = game:GetService("TweenService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 local player = Players.LocalPlayer
 local lifeContent
@@ -17,8 +19,8 @@ end
 
 function BaseController:CreateReferences(): ()
 	-- Botões referentes aos Teleports
-	lifeContent = UIReferences:GetReference("LIFE_CONTENT")
-	lifeText = UIReferences:GetReference("LIFE_TEXT")
+	lifeContent = UIReferences:GetReference(Tags.HUD_HEALTH_BAR)
+	lifeText = UIReferences:GetReference(Tags.HUD_HEALTH_TEXT)
 end
 
 function BaseController:GetBase(): Part

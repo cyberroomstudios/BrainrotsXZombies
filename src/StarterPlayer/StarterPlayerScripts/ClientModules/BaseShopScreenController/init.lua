@@ -1,4 +1,4 @@
-local BaseStoreScreenController = {}
+local BaseShopScreenController = {}
 
 -- === SERVICES
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -16,6 +16,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- === MODULES
 local ClientUtil = require(Players.LocalPlayer.PlayerScripts.ClientModules.ClientUtil)
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 -- === ENUMS
 local Blocks = require(ReplicatedStorage.Enums.blocks)
@@ -40,20 +41,20 @@ local CATEGORY_CONFIG: {
 		Blocks = {
 			Enum = Blocks,
 			Type = "BLOCK",
-			ContainerTag = "BASE_SHOP_BLOCKS_CONTAINER",
-			TabButtonTag = "BASE_SHOP_BLOCKS_TAB_BUTTON",
+			ContainerTag = Tags.BASE_SHOP_BLOCKS_CONTAINER,
+			TabButtonTag = Tags.BASE_SHOP_BLOCKS_TAB_BUTTON,
 		},
 		Melee = {
 			Enum = Melee,
 			Type = "MELEE",
-			ContainerTag = "BASE_SHOP_MELEE_CONTAINER",
-			TabButtonTag = "BASE_SHOP_MELEE_TAB_BUTTON",
+			ContainerTag = Tags.BASE_SHOP_MELEE_CONTAINER,
+			TabButtonTag = Tags.BASE_SHOP_MELEE_TAB_BUTTON,
 		},
 		Ranged = {
 			Enum = Ranged,
 			Type = "RANGED",
-			ContainerTag = "BASE_SHOP_RANGED_CONTAINER",
-			TabButtonTag = "BASE_SHOP_RANGED_TAB_BUTTON",
+			ContainerTag = Tags.BASE_SHOP_RANGED_CONTAINER,
+			TabButtonTag = Tags.BASE_SHOP_RANGED_TAB_BUTTON,
 		},
 	}
 
@@ -161,7 +162,7 @@ local function invokeStockAction(action: string, payload: table?): table?
 	end)
 
 	if not success then
-		warn(`[BaseStore] Failed to invoke {action}: {tostring(response)}`)
+		warn(`[BaseShop] Failed to invoke {action}: {tostring(response)}`)
 		return nil
 	end
 
@@ -173,13 +174,13 @@ local function invokeStockAction(action: string, payload: table?): table?
 	local message = response[messageIdentifier]
 
 	if status == "error" then
-		warn(`[BaseStore] {action} failed: {message or "Unknown error"}`)
+		warn(`[BaseShop] {action} failed: {message or "Unknown error"}`)
 	elseif status == "success" then
 		if message then
-			print(`[BaseStore] {action}: {message}`)
+			print(`[BaseShop] {action}: {message}`)
 		end
 	elseif status ~= nil then
-		warn(`[BaseStore] {action} returned unexpected status: {tostring(status)}`)
+		warn(`[BaseShop] {action} returned unexpected status: {tostring(status)}`)
 	end
 
 	return response
@@ -250,25 +251,25 @@ local function ensureRobuxPrices(categoryName: string, config: table, itemName: 
 		end
 
 		if SelectedCategoryName == resolvedCategory and SelectedItemName == resolvedItemName then
-			BaseStoreScreenController:UpdateSelectedItemDisplay()
+			BaseShopScreenController:UpdateSelectedItemDisplay()
 		end
 	end)
 end
 
 -- === GLOBAL FUNCTIONS
-function BaseStoreScreenController:Init(): ()
-	BaseStoreScreenController:CreateReferences()
-	BaseStoreScreenController:InitBridgeListener()
-	BaseStoreScreenController:ConfigureProximityPrompt()
-	BaseStoreScreenController:InitAttributeListener()
-	BaseStoreScreenController:CreateButtonListeners()
+function BaseShopScreenController:Init(): ()
+	BaseShopScreenController:CreateReferences()
+	BaseShopScreenController:InitBridgeListener()
+	BaseShopScreenController:ConfigureProximityPrompt()
+	BaseShopScreenController:InitAttributeListener()
+	BaseShopScreenController:CreateButtonListeners()
 end
 
-function BaseStoreScreenController:CreateReferences(): ()
-	Screen = UIReferences:GetReference("BASE_SHOP_SCREEN")
-	TimeRestockTextLabel = UIReferences:GetReference("BASE_STORE_TIME_TEXTLABEL")
-	RestockAllButton = UIReferences:GetReference("BASE_SHOP_RESTOCK_BUTTON")
-	CloseButton = UIReferences:GetReference("BASE_SHOP_CLOSE_BUTTON")
+function BaseShopScreenController:CreateReferences(): ()
+	Screen = UIReferences:GetReference(Tags.BASE_SHOP_SCREEN)
+	TimeRestockTextLabel = UIReferences:GetReference(Tags.BASE_SHOP_TIME_TEXT)
+	RestockAllButton = UIReferences:GetReference(Tags.BASE_SHOP_RESTOCK_ALL_BUTTON)
+	CloseButton = UIReferences:GetReference(Tags.BASE_SHOP_CLOSE_BUTTON)
 	for categoryName, config in pairs(CATEGORY_CONFIG) do
 		local container: ScrollingFrame? = UIReferences:GetReference(config.ContainerTag)
 		config.Container = container
@@ -311,7 +312,7 @@ function BaseStoreScreenController:CreateReferences(): ()
 	end
 end
 
-function BaseStoreScreenController:InitBridgeListener(): ()
+function BaseShopScreenController:InitBridgeListener(): ()
 	bridge:Connect(function(response): ()
 		if typeof(response) ~= "table" then
 			return
@@ -319,7 +320,7 @@ function BaseStoreScreenController:InitBridgeListener(): ()
 		local action = response[actionIdentifier]
 		if action == "RobuxItemPurchaseFulfilled" then
 			if Response.isSuccessResponse(response) then
-				BaseStoreScreenController:RefreshStock()
+				BaseShopScreenController:RefreshStock()
 			end
 		elseif action == "RobuxItemRestockFulfilled" then
 			if Response.isSuccessResponse(response) then
@@ -327,28 +328,28 @@ function BaseStoreScreenController:InitBridgeListener(): ()
 				local itemName = response.itemName
 				local remainingStock = response.remainingStock
 				if type(categoryName) ~= "string" or type(itemName) ~= "string" or type(remainingStock) ~= "number" then
-					BaseStoreScreenController:RefreshStock()
+					BaseShopScreenController:RefreshStock()
 					return
 				end
-				local applied = BaseStoreScreenController:SetItemQuantity(categoryName, itemName, remainingStock)
+				local applied = BaseShopScreenController:SetItemQuantity(categoryName, itemName, remainingStock)
 				if not applied then
-					BaseStoreScreenController:RefreshStock()
+					BaseShopScreenController:RefreshStock()
 				end
 			end
 		elseif action == "RobuxRestockAllFulfilled" then
 			if Response.isSuccessResponse(response) then
 				RobuxRestockAllTimestampOffset = response.timestampOffset
 				CurrentCycleId = response.cycleId
-				BaseStoreScreenController:BuildCategories(response.stock)
-				BaseStoreScreenController:UpdateSelectedItemDisplay()
+				BaseShopScreenController:BuildCategories(response.stock)
+				BaseShopScreenController:UpdateSelectedItemDisplay()
 			end
 		elseif action == "StockUpdated" then
 			if Response.isSuccessResponse(response) then
 				local stock: table = response.stock
 				local cycleId: number = response.cycleId
 				if not CurrentCycleId or cycleId > CurrentCycleId then
-					BaseStoreScreenController:BuildCategories(stock)
-					BaseStoreScreenController:UpdateSelectedItemDisplay()
+					BaseShopScreenController:BuildCategories(stock)
+					BaseShopScreenController:UpdateSelectedItemDisplay()
 					CurrentCycleId = cycleId
 				end
 			end
@@ -356,7 +357,7 @@ function BaseStoreScreenController:InitBridgeListener(): ()
 	end)
 end
 
-function BaseStoreScreenController:ClearScreen(): ()
+function BaseShopScreenController:ClearScreen(): ()
 	SelectedCategoryName = nil
 	SelectedItemName = nil
 	for _, config in pairs(CATEGORY_CONFIG) do
@@ -366,19 +367,19 @@ function BaseStoreScreenController:ClearScreen(): ()
 	end
 end
 
-function BaseStoreScreenController:CreateButtonListeners(): ()
+function BaseShopScreenController:CreateButtonListeners(): ()
 	RestockAllButton.MouseButton1Click:Connect(function(): ()
 		local response = invokeStockAction("RestockAllWithRobux", {})
 		if not response then
 			return
 		end
 		if not Response.isSuccessResponse(response) then
-			BaseStoreScreenController:RefreshStock()
+			BaseShopScreenController:RefreshStock()
 		end
 	end)
 
 	CloseButton.MouseButton1Click:Connect(function(): ()
-		BaseStoreScreenController:Close()
+		BaseShopScreenController:Close()
 	end)
 
 	for categoryName, config in pairs(CATEGORY_CONFIG) do
@@ -400,19 +401,16 @@ function BaseStoreScreenController:CreateButtonListeners(): ()
 						local responseItemName = response.itemName or SelectedItemName
 						local remainingStock = response.remainingStock
 						if typeof(remainingStock) == "number" and responseItemName then
-							local applied = BaseStoreScreenController:SetItemQuantity(
-								categoryName,
-								responseItemName,
-								remainingStock
-							)
+							local applied =
+								BaseShopScreenController:SetItemQuantity(categoryName, responseItemName, remainingStock)
 							if not applied then
-								BaseStoreScreenController:RefreshStock()
+								BaseShopScreenController:RefreshStock()
 							end
 						else
-							BaseStoreScreenController:RefreshStock()
+							BaseShopScreenController:RefreshStock()
 						end
 					else
-						BaseStoreScreenController:RefreshStock()
+						BaseShopScreenController:RefreshStock()
 					end
 				end
 			end)
@@ -441,7 +439,7 @@ function BaseStoreScreenController:CreateButtonListeners(): ()
 						},
 					})
 					if not Response.isSuccessResponse(response) then
-						BaseStoreScreenController:RefreshStock()
+						BaseShopScreenController:RefreshStock()
 					end
 				end
 			end)
@@ -459,30 +457,30 @@ function BaseStoreScreenController:CreateButtonListeners(): ()
 	end
 end
 
-function BaseStoreScreenController:ConfigureProximityPrompt(): ()
+function BaseShopScreenController:ConfigureProximityPrompt(): ()
 	local proximityPart = ClientUtil:WaitForDescendants(workspace, "map", "stores", "base", "store", "ProximityPart")
 	local proximityPrompt = proximityPart.ProximityPrompt
 
 	proximityPrompt.PromptShown:Connect(function(): ()
-		BaseStoreScreenController:Open()
-		BaseStoreScreenController:RefreshStock()
+		BaseShopScreenController:Open()
+		BaseShopScreenController:RefreshStock()
 	end)
 
 	proximityPrompt.PromptHidden:Connect(function(): ()
-		BaseStoreScreenController:Close()
+		BaseShopScreenController:Close()
 	end)
 end
 
-function BaseStoreScreenController:Open(): ()
+function BaseShopScreenController:Open(): ()
 	Screen.Visible = true
 end
 
-function BaseStoreScreenController:Close(): ()
-	BaseStoreScreenController:ClearScreen()
+function BaseShopScreenController:Close(): ()
+	BaseShopScreenController:ClearScreen()
 	Screen.Visible = false
 end
 
-function BaseStoreScreenController:InitAttributeListener(): ()
+function BaseShopScreenController:InitAttributeListener(): ()
 	workspace:GetAttributeChangedSignal("TIME_TO_RELOAD_RESTOCK"):Connect(function(): ()
 		local leftTime: number = workspace:GetAttribute("TIME_TO_RELOAD_RESTOCK")
 		if RobuxRestockAllTimestampOffset > 0 then
@@ -493,7 +491,7 @@ function BaseStoreScreenController:InitAttributeListener(): ()
 	end)
 end
 
-function BaseStoreScreenController:BuildCategories(stock: table): ()
+function BaseShopScreenController:BuildCategories(stock: table): ()
 	if not stock then
 		return
 	end
@@ -506,11 +504,11 @@ function BaseStoreScreenController:BuildCategories(stock: table): ()
 			categoryStock = {}
 		end
 		LatestStockByCategory[categoryName] = categoryStock
-		BaseStoreScreenController:BuildCategoryItems(categoryName, categoryStock)
+		BaseShopScreenController:BuildCategoryItems(categoryName, categoryStock)
 	end
 end
 
-function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stockList: table?): ()
+function BaseShopScreenController:BuildCategoryItems(categoryName: string, stockList: table?): ()
 	stockList = stockList or {}
 
 	local config = CATEGORY_CONFIG[categoryName]
@@ -542,7 +540,7 @@ function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stoc
 			capturedButton.MouseButton1Click:Connect(function(): ()
 				SelectedCategoryName = capturedCategoryName
 				SelectedItemName = capturedItemName
-				BaseStoreScreenController:UpdateSelectedItemDisplay()
+				BaseShopScreenController:UpdateSelectedItemDisplay()
 			end)
 		end
 
@@ -612,7 +610,7 @@ function BaseStoreScreenController:BuildCategoryItems(categoryName: string, stoc
 	end
 end
 
-function BaseStoreScreenController:SetItemQuantity(categoryName: string, itemName: string, quantity: number?): boolean
+function BaseShopScreenController:SetItemQuantity(categoryName: string, itemName: string, quantity: number?): boolean
 	local config = CATEGORY_CONFIG[categoryName]
 	if not config then
 		warn(`No category config for {categoryName}`)
@@ -655,12 +653,12 @@ function BaseStoreScreenController:SetItemQuantity(categoryName: string, itemNam
 	end
 
 	if SelectedCategoryName == categoryName and SelectedItemName == itemName then
-		BaseStoreScreenController:UpdateSelectedItemDisplay()
+		BaseShopScreenController:UpdateSelectedItemDisplay()
 	end
 	return true
 end
 
-function BaseStoreScreenController:UpdateSelectedItemDisplay(): ()
+function BaseShopScreenController:UpdateSelectedItemDisplay(): ()
 	for _, config in pairs(CATEGORY_CONFIG) do
 		if config.Buttons then
 			config.Buttons.Visible = false
@@ -719,7 +717,7 @@ function BaseStoreScreenController:UpdateSelectedItemDisplay(): ()
 	ensureRobuxPrices(SelectedCategoryName, config, SelectedItemName, stockEntry)
 end
 
-function BaseStoreScreenController:RefreshStock(): ()
+function BaseShopScreenController:RefreshStock(): ()
 	local stock = invokeStockAction("GetStock")
 	if typeof(stock) ~= "table" then
 		return
@@ -729,8 +727,8 @@ function BaseStoreScreenController:RefreshStock(): ()
 		return
 	end
 
-	BaseStoreScreenController:BuildCategories(stock)
-	BaseStoreScreenController:UpdateSelectedItemDisplay()
+	BaseShopScreenController:BuildCategories(stock)
+	BaseShopScreenController:UpdateSelectedItemDisplay()
 end
 
-return BaseStoreScreenController
+return BaseShopScreenController

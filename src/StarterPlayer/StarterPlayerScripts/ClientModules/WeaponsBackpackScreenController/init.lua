@@ -15,6 +15,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- === MODULES
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local BackpackScreenWrapper = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenWrapper)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 
 -- === LOCAL VARIABLES
 local Wrapper: BackpackScreenWrapper.BackpackScreenWrapper?
@@ -37,9 +38,9 @@ end
 
 function WeaponsBackpackScreenController:CreateReferences(): ()
 	Wrapper = BackpackScreenWrapper.new(
-		UIReferences:GetReference("WEAPONS_BACKPACK_SCREEN"),
-		UIReferences:GetReference("WEAPONS_BACKPACK_ITEMS_CONTAINER"),
-		UIReferences:GetReference("WEAPONS_BACKPACK_CLOSE_BUTTON"),
+		UIReferences:GetReference(Tags.WEAPONS_BACKPACK_SCREEN),
+		UIReferences:GetReference(Tags.WEAPONS_BACKPACK_ITEMS_CONTAINER),
+		UIReferences:GetReference(Tags.WEAPONS_BACKPACK_CLOSE_BUTTON),
 		ReplicatedStorage.GUI.Backpack.ITEM
 	)
 	Wrapper.OnOpen = function(): ()

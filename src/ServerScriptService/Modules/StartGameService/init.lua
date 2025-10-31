@@ -97,7 +97,7 @@ function StartGameService:CreatePlayerFolder(player: Player)
 end
 
 function StartGameService:CreatePlayerAttributes(player: Player)
-	local function getBaseStoreSpawn()
+	local function getBaseShopSpawn()
 		local spawn = UtilService:WaitForDescendants(workspace, "map", "stores", "base", "Spawn")
 
 		if not spawn then
@@ -108,7 +108,7 @@ function StartGameService:CreatePlayerAttributes(player: Player)
 		return spawn
 	end
 
-	local baseSpawn = getBaseStoreSpawn()
+	local baseSpawn = getBaseShopSpawn()
 
 	if baseSpawn then
 		player:SetAttribute("SPAWN_BASE_STORE_CFRAME", baseSpawn.CFrame)

@@ -6,6 +6,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
+local Tags = require(ReplicatedStorage.Enums.Tags)
 local bridge = BridgeNet2.ReferenceBridge("WaveService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -35,7 +36,7 @@ function WaveController:Stop(player: Player)
 end
 function WaveController:CreateReferences()
 	-- Botões referentes aos Teleports
-	currentWaveText = UIReferences:GetReference("CURRENT_WAVE_TEXT")
+	currentWaveText = UIReferences:GetReference(Tags.HUD_WAVE_TEXT)
 end
 
 function WaveController:InitGameStatusListener()
