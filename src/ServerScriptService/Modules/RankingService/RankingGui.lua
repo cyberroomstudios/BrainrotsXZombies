@@ -1,3 +1,8 @@
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local RankingType = require(ReplicatedStorage.Enums.rankingType)
+
 local RankingGui = {}
 RankingGui.__index = RankingGui
 
@@ -9,243 +14,212 @@ export type RankingEntry = {
 
 export type Options = {
 	rankingType: string?,
-	title: string?,
 	maxEntries: number?,
 	nameResolver: ((number) -> string)?,
-	headerBackgroundColor: Color3?,
-	headerBackgroundTransparency: number?,
-	columnBackgroundColor: Color3?,
-	columnBackgroundTransparency: number?,
-	rowBackgroundColor: Color3?,
-	rowBackgroundTransparency: number?,
-	rowHighlightBackgroundColor: Color3?,
-	rowHighlightBackgroundTransparency: number?,
-	titleTextColor: Color3?,
-	columnHeaderTextColor: Color3?,
-	rowTextColor: Color3?,
-	emptyStateTextColor: Color3?,
+	title: string?,
 }
 
 -- === CONSTANTS
-local DEFAULT_MAX_ENTRIES: number = 10
-local HEADER_HEIGHT: number = 64
-local COLUMN_HEADER_HEIGHT: number = 40
-local ROW_HEIGHT: number = 48
-local TITLE_TEXT_SIZE: number = 36
-local COLUMN_TEXT_SIZE: number = 22
-local ROW_TEXT_SIZE: number = 24
-local EMPTY_TEXT_SIZE: number = 22
-local DEFAULT_HEADER_BACKGROUND_COLOR = Color3.fromRGB(20, 20, 20)
-local DEFAULT_HEADER_BACKGROUND_TRANSPARENCY = 0.2
-local DEFAULT_COLUMN_BACKGROUND_COLOR = DEFAULT_HEADER_BACKGROUND_COLOR
-local DEFAULT_COLUMN_BACKGROUND_TRANSPARENCY = 0.3
-local DEFAULT_ROW_BACKGROUND_COLOR = Color3.fromRGB(25, 25, 25)
-local DEFAULT_ROW_BACKGROUND_TRANSPARENCY = 0.4
-local DEFAULT_ROW_HIGHLIGHT_BACKGROUND_COLOR = Color3.fromRGB(64, 128, 255)
-local DEFAULT_ROW_HIGHLIGHT_BACKGROUND_TRANSPARENCY = 0.2
-local DEFAULT_TITLE_TEXT_COLOR = Color3.fromRGB(255, 255, 255)
-local DEFAULT_COLUMN_HEADER_TEXT_COLOR = Color3.fromRGB(200, 200, 200)
-local DEFAULT_ROW_TEXT_COLOR = DEFAULT_TITLE_TEXT_COLOR
-local DEFAULT_EMPTY_STATE_TEXT_COLOR = Color3.fromRGB(180, 180, 180)
+local DEFAULT_MAX_ENTRIES: number = 100
+local MAX_SUPPORTED_ENTRIES: number = 100
+local THUMBNAIL_TYPE = Enum.ThumbnailType.HeadShot
+local THUMBNAIL_SIZE = Enum.ThumbnailSize.Size420x420
 
--- === CONSTRUCTOR
+local PLAYER_NAME_LABEL_PATH = { "Content", "Fields", "Name" }
+local PLAYER_VALUE_LABEL_PATH = { "Content", "Fields", "Value", "Name" }
+local PLAYER_RANK_LABEL_PATH = { "Content", "Fields", "Rank", "Name" }
+local PLAYER_IMAGE_PATH = { "PlayerImage" }
+
+local function findDescendant(instance: Instance?, path: { string }): Instance?
+	local current = instance
+	for _, name in ipairs(path) do
+		if current == nil then
+			return nil
+		end
+		current = current:FindFirstChild(name)
+	end
+	return current
+end
+
+local function setLabelText(label: Instance?, text: string, color: Color3?)
+	if not label then
+		return
+	end
+
+	if label:IsA("TextLabel") or label:IsA("TextButton") then
+		label.Text = text
+		if color then
+			label.TextColor3 = color
+		end
+	end
+end
+
+local function ensureGuiObject(instance: Instance?, pathDescription: string): GuiObject
+	assert(instance ~= nil, `RankingGui expected {pathDescription}`)
+	assert(instance:IsA("GuiObject"), `RankingGui expected {pathDescription} to be a GuiObject`)
+	return instance
+end
+
+local function cloneTemplate(template: GuiObject): GuiObject
+	local clone = template:Clone()
+	clone.Visible = true
+	return clone
+end
+
 function RankingGui.new(surfaceGui: SurfaceGui, options: Options?)
 	assert(surfaceGui and surfaceGui:IsA("SurfaceGui"), "RankingGui.new expects a SurfaceGui instance")
+
 	options = options or {}
 
 	local self = setmetatable({}, RankingGui)
 	self.surfaceGui = surfaceGui
+
+	local mainFrame = surfaceGui:FindFirstChild("Main")
+	local mainFrameObject = ensureGuiObject(mainFrame, "SurfaceGui.Main")
+	local titleFrame = mainFrameObject:FindFirstChild("Title")
+	if titleFrame and titleFrame:IsA("GuiObject") then
+		self.titleLayer1 = titleFrame:FindFirstChild("Layer1")
+		self.titleLayer2 = titleFrame:FindFirstChild("Layer2")
+	end
+
+	local contentFrame = mainFrameObject:FindFirstChild("Content")
+	contentFrame = ensureGuiObject(contentFrame, "SurfaceGui.Main.Content")
+
+	local itemsContainer = contentFrame:FindFirstChild("Content")
+	assert(itemsContainer and itemsContainer:IsA("ScrollingFrame"), "RankingGui expected Main.Content.Content to be a ScrollingFrame")
+
+	self.container = itemsContainer
+	self.layout = itemsContainer:FindFirstChildOfClass("UIListLayout")
+
+	self.templates = {}
+	for _, templateName in ipairs({ "Rank1", "Rank2", "Rank3", "Rank" }) do
+		local template = itemsContainer:FindFirstChild(templateName)
+		if template and template:IsA("GuiObject") then
+			template.Visible = false
+			template.Parent = nil
+			self.templates[templateName] = template
+		end
+	end
+
+	assert(self.templates.Rank, "RankingGui requires a 'Rank' template to be present")
+	self.defaultTemplate = self.templates.Rank
+
+	if self.defaultTemplate:IsA("GuiObject") then
+		self.defaultRowBackgroundColor = self.defaultTemplate.BackgroundColor3
+		self.defaultRowBackgroundTransparency = self.defaultTemplate.BackgroundTransparency
+	end
+	self.highlightRowBackgroundColor = self.defaultTemplate:GetAttribute("HighlightBackgroundColor3")
+	self.highlightRowBackgroundTransparency = self.defaultTemplate:GetAttribute("HighlightBackgroundTransparency")
+
 	self.rankingType = options.rankingType or surfaceGui.Name
-	self.maxEntries = options.maxEntries or DEFAULT_MAX_ENTRIES
+	self.maxEntries = math.clamp(options.maxEntries or DEFAULT_MAX_ENTRIES, 1, MAX_SUPPORTED_ENTRIES)
 	self.nameResolver = options.nameResolver
-	self.title = options.title or self.rankingType
 	self.items = {}
 	self.emptyLabel = nil
-	self.headerBackgroundColor = options.headerBackgroundColor or DEFAULT_HEADER_BACKGROUND_COLOR
-	self.headerBackgroundTransparency = options.headerBackgroundTransparency or DEFAULT_HEADER_BACKGROUND_TRANSPARENCY
-	self.columnBackgroundColor = options.columnBackgroundColor or self.headerBackgroundColor or DEFAULT_COLUMN_BACKGROUND_COLOR
-	self.columnBackgroundTransparency = options.columnBackgroundTransparency or DEFAULT_COLUMN_BACKGROUND_TRANSPARENCY
-	self.rowBackgroundColor = options.rowBackgroundColor or DEFAULT_ROW_BACKGROUND_COLOR
-	self.rowBackgroundTransparency = options.rowBackgroundTransparency or DEFAULT_ROW_BACKGROUND_TRANSPARENCY
-	self.rowHighlightBackgroundColor = options.rowHighlightBackgroundColor or DEFAULT_ROW_HIGHLIGHT_BACKGROUND_COLOR
-	self.rowHighlightBackgroundTransparency = options.rowHighlightBackgroundTransparency
-		or DEFAULT_ROW_HIGHLIGHT_BACKGROUND_TRANSPARENCY
-	self.titleTextColor = options.titleTextColor or DEFAULT_TITLE_TEXT_COLOR
-	self.columnHeaderTextColor = options.columnHeaderTextColor or DEFAULT_COLUMN_HEADER_TEXT_COLOR
-	self.rowTextColor = options.rowTextColor or DEFAULT_ROW_TEXT_COLOR
-	self.emptyStateTextColor = options.emptyStateTextColor or DEFAULT_EMPTY_STATE_TEXT_COLOR
+	self.thumbnailCache = {}
+
+	self.baseRowLayoutOrder = self.defaultTemplate.LayoutOrder or 0
 
 	surfaceGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-	self.container = surfaceGui:FindFirstChild("RankingContainer")
-	if not self.container then
-		self.container = Instance.new("Frame")
-		self.container.Name = "RankingContainer"
-		self.container.BackgroundTransparency = 1
-		self.container.BorderSizePixel = 0
-		self.container.Size = UDim2.fromScale(1, 1)
-		self.container.Parent = surfaceGui
-	end
-	self.container.ClipsDescendants = false
-
-	local padding = self.container:FindFirstChildOfClass("UIPadding")
-	if not padding then
-		padding = Instance.new("UIPadding")
-		padding.PaddingTop = UDim.new(0, 20)
-		padding.PaddingBottom = UDim.new(0, 20)
-		padding.PaddingLeft = UDim.new(0, 20)
-		padding.PaddingRight = UDim.new(0, 20)
-		padding.Parent = self.container
-	end
-
-	self.layout = self.container:FindFirstChildOfClass("UIListLayout")
-	if not self.layout then
-		self.layout = Instance.new("UIListLayout")
-		self.layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-		self.layout.VerticalAlignment = Enum.VerticalAlignment.Top
-		self.layout.SortOrder = Enum.SortOrder.LayoutOrder
-		self.layout.Padding = UDim.new(0, 8)
-		self.layout.Parent = self.container
-	end
-
-	self:CreateHeader()
+	self:SetTitle(options.title or RankingType.GetTitle(self.rankingType))
 
 	return self
 end
 
--- === GLOBAL FUNCTIONS
-function RankingGui:CreateHeader(): ()
-	local header = self.container:FindFirstChild("Header")
-	if not header then
-		header = Instance.new("Frame")
-		header.Name = "Header"
-		header.Parent = self.container
-	end
-	header.BackgroundColor3 = self.headerBackgroundColor
-	header.BackgroundTransparency = self.headerBackgroundTransparency
-	header.BorderSizePixel = 0
-	header.LayoutOrder = 0
-	header.Size = UDim2.new(1, 0, 0, HEADER_HEIGHT)
-
-	local headerCorner = header:FindFirstChildOfClass("UICorner")
-	if not headerCorner then
-		headerCorner = Instance.new("UICorner")
-		headerCorner.Parent = header
-	end
-	headerCorner.CornerRadius = UDim.new(0, 8)
-
-	local headerPadding = header:FindFirstChildOfClass("UIPadding")
-	if not headerPadding then
-		headerPadding = Instance.new("UIPadding")
-		headerPadding.Parent = header
-	end
-	headerPadding.PaddingLeft = UDim.new(0, 16)
-	headerPadding.PaddingRight = UDim.new(0, 16)
-
-	local titleLabel = header:FindFirstChild("Title")
-	if not titleLabel then
-		titleLabel = Instance.new("TextLabel")
-		titleLabel.Name = "Title"
-		titleLabel.Parent = header
-	end
-	titleLabel.AnchorPoint = Vector2.new(0, 0.5)
-	titleLabel.Position = UDim2.fromScale(0, 0.5)
-	titleLabel.Size = UDim2.new(1, -32, 1, 0)
-	titleLabel.BackgroundTransparency = 1
-	titleLabel.Text = string.format("%s Leaderboard", self.title)
-	titleLabel.Font = Enum.Font.GothamBold
-	titleLabel.TextScaled = false
-	titleLabel.TextSize = TITLE_TEXT_SIZE
-	titleLabel.TextColor3 = self.titleTextColor
-	titleLabel.TextXAlignment = Enum.TextXAlignment.Left
-	titleLabel.TextYAlignment = Enum.TextYAlignment.Center
-
-	local columnHeader = self.container:FindFirstChild("ColumnLabels")
-	if not columnHeader then
-		columnHeader = Instance.new("Frame")
-		columnHeader.Name = "ColumnLabels"
-		columnHeader.Parent = self.container
-	end
-	columnHeader.BackgroundTransparency = self.columnBackgroundTransparency
-	columnHeader.BackgroundColor3 = self.columnBackgroundColor
-	columnHeader.BorderSizePixel = 0
-	columnHeader.LayoutOrder = 1
-	columnHeader.Size = UDim2.new(1, 0, 0, COLUMN_HEADER_HEIGHT)
-
-	local columnCorner = columnHeader:FindFirstChildOfClass("UICorner")
-	if not columnCorner then
-		columnCorner = Instance.new("UICorner")
-		columnCorner.Parent = columnHeader
-	end
-	columnCorner.CornerRadius = UDim.new(0, 8)
-
-	local columnPadding = columnHeader:FindFirstChildOfClass("UIPadding")
-	if not columnPadding then
-		columnPadding = Instance.new("UIPadding")
-		columnPadding.Parent = columnHeader
-	end
-	columnPadding.PaddingLeft = UDim.new(0, 16)
-	columnPadding.PaddingRight = UDim.new(0, 24)
-
-	local rowLayout = columnHeader:FindFirstChildOfClass("UIListLayout")
-	if not rowLayout then
-		rowLayout = Instance.new("UIListLayout")
-		rowLayout.Parent = columnHeader
-	end
-	rowLayout.FillDirection = Enum.FillDirection.Horizontal
-	rowLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	rowLayout.VerticalAlignment = Enum.VerticalAlignment.Center
-	rowLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	rowLayout.Padding = UDim.new(0, 8)
-
-	local function ensureColumn(
-		name: string,
-		text: string,
-		size: UDim2,
-		alignment: Enum.TextXAlignment,
-		layoutOrder: number
-	): TextLabel
-		local label = columnHeader:FindFirstChild(name)
-		if not label then
-			label = Instance.new("TextLabel")
-			label.Name = name
-			label.Parent = columnHeader
-		end
-		label.LayoutOrder = layoutOrder
-		label.BackgroundTransparency = 1
-		label.BorderSizePixel = 0
-		label.Size = size
-		label.Font = Enum.Font.GothamBold
-		label.Text = text
-		label.TextColor3 = self.columnHeaderTextColor
-		label.TextScaled = false
-		label.TextSize = COLUMN_TEXT_SIZE
-		label.TextXAlignment = alignment
-		label.TextYAlignment = Enum.TextYAlignment.Center
-		return label
+function RankingGui:SetTitle(title: string?)
+	local text = title or "LEADERBOARD"
+	if typeof(text) == "string" then
+		text = string.upper(text)
+	else
+		text = "LEADERBOARD"
 	end
 
-	ensureColumn("Rank", "RANK", UDim2.new(0.2, 0, 1, 0), Enum.TextXAlignment.Left, 1)
-	ensureColumn("Player", "PLAYER", UDim2.new(0.5, 0, 1, 0), Enum.TextXAlignment.Left, 2)
-	ensureColumn("Value", "VALUE", UDim2.new(0.3, 0, 1, 0), Enum.TextXAlignment.Right, 3)
+	setLabelText(self.titleLayer1, text, nil)
+	setLabelText(self.titleLayer2, text, nil)
 end
 
-function RankingGui:CreateEmptyState(): TextLabel
-	local label = Instance.new("TextLabel")
-	label.Name = "EmptyState"
-	label.BackgroundTransparency = 1
-	label.BorderSizePixel = 0
-	label.LayoutOrder = 2
-	label.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
-	label.Font = Enum.Font.Gotham
-	label.Text = "No data yet"
-	label.TextColor3 = self.emptyStateTextColor
-	label.TextScaled = false
-	label.TextSize = EMPTY_TEXT_SIZE
-	label.TextXAlignment = Enum.TextXAlignment.Center
-	label.TextYAlignment = Enum.TextYAlignment.Center
-	label.Parent = self.container
-	return label
+function RankingGui:GetTemplateForIndex(index: number): GuiObject
+	if index == 1 and self.templates.Rank1 then
+		return self.templates.Rank1
+	elseif index == 2 and self.templates.Rank2 then
+		return self.templates.Rank2
+	elseif index == 3 and self.templates.Rank3 then
+		return self.templates.Rank3
+	end
+	return self.defaultTemplate
+end
+
+function RankingGui:ApplyRowStyle(row: GuiObject, highlight: boolean): ()
+	if not row:IsA("GuiObject") then
+		return
+	end
+
+	if highlight then
+		if typeof(self.highlightRowBackgroundColor) == "Color3" then
+			row.BackgroundColor3 = self.highlightRowBackgroundColor
+		end
+		if typeof(self.highlightRowBackgroundTransparency) == "number" then
+			row.BackgroundTransparency = self.highlightRowBackgroundTransparency
+		end
+		row:SetAttribute("IsHighlighted", true)
+	else
+		if self.defaultRowBackgroundColor then
+			row.BackgroundColor3 = self.defaultRowBackgroundColor
+		end
+		if self.defaultRowBackgroundTransparency ~= nil then
+			row.BackgroundTransparency = self.defaultRowBackgroundTransparency
+		end
+		row:SetAttribute("IsHighlighted", false)
+	end
+end
+
+function RankingGui:GetPlayerThumbnail(userId: number?): string?
+	if userId == nil or userId <= 0 then
+		return nil
+	end
+
+	local cached = self.thumbnailCache[userId]
+	if cached ~= nil then
+		return cached ~= "" and cached or nil
+	end
+
+	local success, content = pcall(Players.GetUserThumbnailAsync, Players, userId, THUMBNAIL_TYPE, THUMBNAIL_SIZE)
+	if success and typeof(content) == "string" and content ~= "" then
+		self.thumbnailCache[userId] = content
+		return content
+	end
+
+	self.thumbnailCache[userId] = ""
+	return nil
+end
+
+function RankingGui:CreateEmptyState(): GuiObject
+	local placeholder = cloneTemplate(self.defaultTemplate)
+	placeholder.Name = "EmptyState"
+
+	if placeholder:IsA("GuiBase2d") then
+		placeholder.LayoutOrder = self.baseRowLayoutOrder
+	end
+	if placeholder:IsA("GuiObject") then
+		self:ApplyRowStyle(placeholder, false)
+	end
+
+	setLabelText(findDescendant(placeholder, PLAYER_RANK_LABEL_PATH), "", nil)
+	local nameLabel = findDescendant(placeholder, PLAYER_NAME_LABEL_PATH)
+	setLabelText(nameLabel, "No data yet", nil)
+	if nameLabel and nameLabel:IsA("TextLabel") then
+		nameLabel.TextXAlignment = Enum.TextXAlignment.Center
+	end
+	setLabelText(findDescendant(placeholder, PLAYER_VALUE_LABEL_PATH), "", nil)
+
+	local imageLabel = findDescendant(placeholder, PLAYER_IMAGE_PATH)
+	if imageLabel and imageLabel:IsA("ImageLabel") then
+		imageLabel.Image = ""
+	end
+
+	placeholder.Parent = self.container
+	return placeholder
 end
 
 function RankingGui:ResolveName(userId: number?): string
@@ -264,73 +238,32 @@ function RankingGui:ResolveName(userId: number?): string
 end
 
 function RankingGui:FormatValue(value: number): string
-	if typeof(value) ~= "number" then
-		return tostring(value)
-	end
-
-	return tostring(value)
+	return RankingType.FormatValue(self.rankingType, value)
 end
 
-function RankingGui:CreateRow(index: number, displayName: string, value: number, highlight: boolean): Frame
-	local row = Instance.new("Frame")
-	row.Name = `Row_{index}`
-	row.BackgroundTransparency = highlight and self.rowHighlightBackgroundTransparency or self.rowBackgroundTransparency
-	row.BackgroundColor3 = highlight and self.rowHighlightBackgroundColor or self.rowBackgroundColor
-	row.BorderSizePixel = 0
-	row.LayoutOrder = index + 1
-	row.Size = UDim2.new(1, 0, 0, ROW_HEIGHT)
+function RankingGui:CreateRow(index: number, userId: number?, displayName: string, value: number, highlight: boolean): GuiObject
+	local template = self:GetTemplateForIndex(index)
+	local row = cloneTemplate(template)
+	row.Name = `Rank_${index}`
+	row:SetAttribute("UserId", userId)
 
-	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 6)
-	corner.Parent = row
-
-	local padding = Instance.new("UIPadding")
-	padding.PaddingLeft = UDim.new(0, 16)
-	padding.PaddingRight = UDim.new(0, 24)
-	padding.Parent = row
-
-	local layout = Instance.new("UIListLayout")
-	layout.FillDirection = Enum.FillDirection.Horizontal
-	layout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-	layout.VerticalAlignment = Enum.VerticalAlignment.Center
-	layout.SortOrder = Enum.SortOrder.LayoutOrder
-	layout.Padding = UDim.new(0, 8)
-	layout.Parent = row
-
-	local function createLabel(
-		name: string,
-		text: string,
-		size: UDim2,
-		alignment: Enum.TextXAlignment,
-		font: Enum.Font,
-		isBold: boolean
-	)
-		local label = Instance.new("TextLabel")
-		label.Name = name
-		label.BackgroundTransparency = 1
-		label.BorderSizePixel = 0
-		label.Size = size
-		label.Font = isBold and Enum.Font.GothamBold or font
-		label.Text = text
-		label.TextColor3 = self.rowTextColor
-		label.TextScaled = false
-		label.TextSize = ROW_TEXT_SIZE
-		label.TextXAlignment = alignment
-		label.TextYAlignment = Enum.TextYAlignment.Center
-		label.Parent = row
-		return label
+	if row:IsA("GuiBase2d") then
+		row.LayoutOrder = self.baseRowLayoutOrder + index - 1
 	end
 
-	createLabel("Rank", tostring(index), UDim2.new(0.2, 0, 1, 0), Enum.TextXAlignment.Left, Enum.Font.Gotham, true)
-	createLabel("Player", displayName, UDim2.new(0.5, 0, 1, 0), Enum.TextXAlignment.Left, Enum.Font.Gotham, false)
-	createLabel(
-		"Value",
-		self:FormatValue(value),
-		UDim2.new(0.3, 0, 1, 0),
-		Enum.TextXAlignment.Right,
-		Enum.Font.Gotham,
-		false
-	)
+	if row:IsA("GuiObject") then
+		self:ApplyRowStyle(row, highlight)
+	end
+
+	setLabelText(findDescendant(row, PLAYER_RANK_LABEL_PATH), string.format("#%d", index), nil)
+	setLabelText(findDescendant(row, PLAYER_NAME_LABEL_PATH), displayName, nil)
+	setLabelText(findDescendant(row, PLAYER_VALUE_LABEL_PATH), self:FormatValue(value), nil)
+
+	local thumbnail = self:GetPlayerThumbnail(userId)
+	local imageLabel = findDescendant(row, PLAYER_IMAGE_PATH)
+	if imageLabel and imageLabel:IsA("ImageLabel") then
+		imageLabel.Image = thumbnail or imageLabel.Image
+	end
 
 	return row
 end
@@ -360,7 +293,7 @@ function RankingGui:SetEntries(entries: { RankingEntry }, highlightUserId: numbe
 		local entry = entries[index]
 		local userIdNumber = tonumber(entry.UserId)
 		local displayName = self:ResolveName(userIdNumber)
-		local row = self:CreateRow(index, displayName, entry.Value, highlightId ~= nil and highlightId == userIdNumber)
+		local row = self:CreateRow(index, userIdNumber, displayName, entry.Value, highlightId ~= nil and highlightId == userIdNumber)
 		row.Parent = self.container
 		table.insert(self.items, row)
 	end
@@ -376,6 +309,11 @@ function RankingGui:Destroy(): ()
 		self.emptyLabel:Destroy()
 		self.emptyLabel = nil
 	end
+
+	for _, template in pairs(self.templates) do
+		template:Destroy()
+	end
+	self.templates = {}
 end
 
 return RankingGui

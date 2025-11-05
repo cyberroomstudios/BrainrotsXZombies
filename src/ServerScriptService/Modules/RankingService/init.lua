@@ -29,7 +29,7 @@ local RankingGui = require(script.RankingGui)
 local RankingType = require(ReplicatedStorage.Enums.rankingType)
 
 -- === CONSTANTS
-local DEFAULT_RANKING_COUNT: number = 10
+local DEFAULT_RANKING_COUNT: number = 100
 local MAX_RANKING_COUNT: number = 100
 local RANKING_PREFIX: string = "Ranking_"
 local ACTIONS = table.freeze({
@@ -42,64 +42,6 @@ local RANKING_TYPES: { string } = table.freeze({
 	RankingType.MaxWave,
 	RankingType.RobuxSpent,
 })
-local RANKING_BOARD_STYLES = table.freeze({
-	[RankingType.Playtime] = {
-		headerBackgroundColor = Color3.fromRGB(16, 46, 56),
-		headerBackgroundTransparency = 0.15,
-		columnBackgroundColor = Color3.fromRGB(12, 38, 46),
-		columnBackgroundTransparency = 0.25,
-		rowBackgroundColor = Color3.fromRGB(8, 26, 32),
-		rowBackgroundTransparency = 0.45,
-		rowHighlightBackgroundColor = Color3.fromRGB(52, 176, 196),
-		rowHighlightBackgroundTransparency = 0.15,
-		titleTextColor = Color3.fromRGB(220, 240, 245),
-		columnHeaderTextColor = Color3.fromRGB(176, 210, 215),
-		rowTextColor = Color3.fromRGB(232, 245, 250),
-		emptyStateTextColor = Color3.fromRGB(150, 190, 195),
-	},
-	[RankingType.Money] = {
-		headerBackgroundColor = Color3.fromRGB(20, 56, 28),
-		headerBackgroundTransparency = 0.15,
-		columnBackgroundColor = Color3.fromRGB(18, 46, 24),
-		columnBackgroundTransparency = 0.25,
-		rowBackgroundColor = Color3.fromRGB(12, 32, 18),
-		rowBackgroundTransparency = 0.45,
-		rowHighlightBackgroundColor = Color3.fromRGB(88, 192, 112),
-		rowHighlightBackgroundTransparency = 0.15,
-		titleTextColor = Color3.fromRGB(220, 244, 224),
-		columnHeaderTextColor = Color3.fromRGB(180, 216, 188),
-		rowTextColor = Color3.fromRGB(232, 255, 236),
-		emptyStateTextColor = Color3.fromRGB(160, 196, 168),
-	},
-	[RankingType.MaxWave] = {
-		headerBackgroundColor = Color3.fromRGB(44, 24, 64),
-		headerBackgroundTransparency = 0.15,
-		columnBackgroundColor = Color3.fromRGB(38, 20, 56),
-		columnBackgroundTransparency = 0.25,
-		rowBackgroundColor = Color3.fromRGB(26, 14, 40),
-		rowBackgroundTransparency = 0.45,
-		rowHighlightBackgroundColor = Color3.fromRGB(156, 92, 232),
-		rowHighlightBackgroundTransparency = 0.15,
-		titleTextColor = Color3.fromRGB(236, 222, 255),
-		columnHeaderTextColor = Color3.fromRGB(200, 176, 232),
-		rowTextColor = Color3.fromRGB(244, 230, 255),
-		emptyStateTextColor = Color3.fromRGB(184, 162, 220),
-	},
-	[RankingType.RobuxSpent] = {
-		headerBackgroundColor = Color3.fromRGB(64, 40, 16),
-		headerBackgroundTransparency = 0.15,
-		columnBackgroundColor = Color3.fromRGB(56, 34, 12),
-		columnBackgroundTransparency = 0.25,
-		rowBackgroundColor = Color3.fromRGB(44, 26, 8),
-		rowBackgroundTransparency = 0.45,
-		rowHighlightBackgroundColor = Color3.fromRGB(216, 168, 64),
-		rowHighlightBackgroundTransparency = 0.15,
-		titleTextColor = Color3.fromRGB(255, 236, 210),
-		columnHeaderTextColor = Color3.fromRGB(216, 194, 168),
-		rowTextColor = Color3.fromRGB(255, 240, 220),
-		emptyStateTextColor = Color3.fromRGB(204, 180, 150),
-	},
-})
 local PLAYER_DATA_KEYS_BY_TYPE: { [string]: string } = table.freeze({
 	[RankingType.Playtime] = "totalPlaytime",
 	[RankingType.Money] = "money",
@@ -107,7 +49,7 @@ local PLAYER_DATA_KEYS_BY_TYPE: { [string]: string } = table.freeze({
 	[RankingType.RobuxSpent] = "robuxSpent",
 })
 local RANKINGS_FOLDER_NAME: string = "rankings"
-local MAX_DISPLAYED_RANKS: number = DEFAULT_RANKING_COUNT
+local MAX_DISPLAYED_RANKS: number = MAX_RANKING_COUNT
 
 -- === LOCAL VARIABLES
 local DataStores: { [string]: OrderedDataStore } = {}
@@ -259,17 +201,23 @@ function RankingService:InitRankingBoards(): ()
 			else
 				local options = {
 					rankingType = rankingType,
-					title = rankingType,
 					maxEntries = MAX_DISPLAYED_RANKS,
 					nameResolver = RankingService.ResolveDisplayName,
+					title = RankingType.GetTitle(rankingType),
 				}
-				local style = RANKING_BOARD_STYLES[rankingType]
-				if style then
-					for key, value in pairs(style) do
-						options[key] = value
+
+				local success, boardOrError = pcall(RankingGui.new, surfaceGui, options)
+				if success and boardOrError then
+					local board = boardOrError
+					if board.SetTitle then
+						board:SetTitle(RankingType.GetTitle(rankingType))
 					end
+					RankingBoards[rankingType] = board
+				else
+					warn(
+						`[RankingService] Failed to initialise ranking UI for "{rankingType}": {boardOrError}`
+					)
 				end
-				RankingBoards[rankingType] = RankingGui.new(surfaceGui, options)
 			end
 		end
 	end
