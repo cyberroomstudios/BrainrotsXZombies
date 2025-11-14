@@ -2,8 +2,8 @@
 
 local Melee = table.freeze({
 
-	["cappuccinoAssassino"] = {
-		Name = "cappuccinoAssassino",
+	["CappuccinoAssassino"] = {
+		Name = "CappuccinoAssassino",
 		HP = 1000,
 		Damege = 40,
 		Price = 1000,
@@ -30,8 +30,8 @@ local Melee = table.freeze({
 		},
 	},
 
-	["tungTungSahur"] = {
-		Name = "tungTungSahur",
+	["TungTungSahur"] = {
+		Name = "TungTungSahur",
 		HP = 700,
 		Damege = 30,
 		Price = 1000,
@@ -58,8 +58,8 @@ local Melee = table.freeze({
 		},
 	},
 
-	["odin"] = {
-		Name = "odin",
+	["Odin"] = {
+		Name = "Odin",
 		HP = 1400,
 		Damege = 80,
 		Price = 1000,

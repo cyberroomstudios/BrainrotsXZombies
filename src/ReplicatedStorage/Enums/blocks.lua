@@ -2,8 +2,8 @@
 
 local Blocks = table.freeze({
 
-	["blue"] = {
-		Name = "blue",
+	["Blue"] = {
+		Name = "Blue",
 		HP = 350,
 		Price = 1000,
 		ProductId = 3430682566,
@@ -22,8 +22,8 @@ local Blocks = table.freeze({
 		},
 	},
 
-	["orange"] = {
-		Name = "orange",
+	["Orange"] = {
+		Name = "Orange",
 		HP = 200,
 		Price = 1500,
 		ProductId = 3430731014,
@@ -42,8 +42,8 @@ local Blocks = table.freeze({
 		},
 	},
 
-	["yellow"] = {
-		Name = "yellow",
+	["Yellow"] = {
+		Name = "Yellow",
 		HP = 500,
 		Price = 10000,
 		ProductId = 3430856042,

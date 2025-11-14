@@ -57,7 +57,7 @@ function StartGameService:InitBridgeListener()
 			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
 			UnitService:Give(player, "tungTungSahur", "MELEE")
 			UnitService:Give(player, "odin", "MELEE")
-			UnitService:Give(player, "Lirili", "MELEE")
+			UnitService:Give(player, "lirili", "MELEE")
 			WeaponService:Give(player, "Fist")
 			WeaponService:Give(player, "Pistol")
 

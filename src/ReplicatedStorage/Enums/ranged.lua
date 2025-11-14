@@ -113,8 +113,8 @@ local Ranged = table.freeze({
 		},
 	},
 
-	["bobritoBandito"] = {
-		Name = "bobritoBandito",
+	["BobritoBandito"] = {
+		Name = "BobritoBandito",
 		IsBrainrot = true,
 		HP = 800,
 		Damege = 25,
@@ -169,8 +169,8 @@ local Ranged = table.freeze({
 		},
 	},
 
-	["tralaleroTralala"] = {
-		Name = "tralaleroTralala",
+	["TralaleroTralala"] = {
+		Name = "TralaleroTralala",
 		IsBrainrot = true,
 		HP = 900,
 		Damege = 40,
@@ -197,8 +197,8 @@ local Ranged = table.freeze({
 		},
 	},
 
-	["bombardinoCrocodilo"] = {
-		Name = "bombardinoCrocodilo",
+	["BombardinoCrocodilo"] = {
+		Name = "BombardinoCrocodilo",
 		IsBrainrot = true,
 		HP = 1200,
 		Damege = 60,
