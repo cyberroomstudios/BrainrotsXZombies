@@ -39,39 +39,31 @@ function StartGameService:InitBridgeListener()
 				return false
 			end
 
-			-- Criando a pasta do Player
 			StartGameService:CreatePlayerFolder(player)
-
-			-- Alocando a Base
 			BaseService:Allocate(player)
-
 			MapService:InitMapForPlayer(player)
-
 			StartGameService:InitPlayerAtributes(player)
-
 			StartGameService:CreatePlayerAttributes(player)
-			UnitService:Give(player, "blue", "BLOCK")
-			UnitService:Give(player, "orange", "BLOCK")
-			UnitService:Give(player, "yellow", "BLOCK")
+			-- UnitService:Give(player, "Blue", "BLOCK")
+			-- UnitService:Give(player, "Orange", "BLOCK")
+			-- UnitService:Give(player, "Yellow", "BLOCK")
+			-- UnitService:Give(player, "CappuccinoAssassino", "MELEE")
+			-- UnitService:Give(player, "TungTungSahur", "MELEE")
+			-- UnitService:Give(player, "Odin", "MELEE")
+			-- UnitService:Give(player, "Lirili", "MELEE")
+			-- UnitService:Give(player, "TowerLevel1", "RANGED")
+			-- UnitService:Give(player, "TowerLevel2", "RANGED")
+			-- UnitService:Give(player, "TowerLevel3", "RANGED")
+			-- UnitService:Give(player, "TowerLevel4", "RANGED")
+			-- UnitService:Give(player, "BobritoBandito", "RANGED")
+			-- UnitService:Give(player, "Noobini", "RANGED")
+			-- UnitService:Give(player, "BobritoBandito", "RANGED")
+			-- UnitService:Give(player, "TralaleroTralala", "RANGED")
+			-- UnitService:Give(player, "BombardinoCrocodilo", "RANGED")
+			-- UnitService:Give(player, "SpikesLevel1", "SPIKES")
 
-			UnitService:Give(player, "cappuccinoAssassino", "MELEE")
-			UnitService:Give(player, "tungTungSahur", "MELEE")
-			UnitService:Give(player, "odin", "MELEE")
-			UnitService:Give(player, "lirili", "MELEE")
-			WeaponService:Give(player, "Fist")
-			WeaponService:Give(player, "Pistol")
-
-			--			UnitService:Give(player, "TowerLevel1", "RANGED")
-			--			UnitService:Give(player, "TowerLevel2", "RANGED")
-			--			UnitService:Give(player, "TowerLevel3", "RANGED")
-			--			UnitService:Give(player, "TowerLevel4", "RANGED")
-			UnitService:Give(player, "bobritoBandito", "RANGED")
-			--			UnitService:Give(player, "Noobini", "RANGED")
-			--			UnitService:Give(player, "bobritoBandito", "RANGED")
-			UnitService:Give(player, "tralaleroTralala", "RANGED")
-			--			UnitService:Give(player, "bombardinoCrocodilo", "RANGED")
-
-			UnitService:Give(player, "SpikesLevel1", "SPIKES")
+			-- WeaponService:Give(player, "Fist")
+			-- WeaponService:Give(player, "Pistol")
 		end
 	end
 end
