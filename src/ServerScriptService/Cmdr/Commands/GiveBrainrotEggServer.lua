@@ -1,9 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
-
-local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local BrainrotEggService = require(ServerScriptService.Modules.BrainrotEggService)
 
-return function(context, player, type: string)
-	BrainrotEggService:GiveEgg(player, type)
-	return "Success!"
+return function(context: any, player: Player, name: string): string
+	local success: boolean = BrainrotEggService:TryGiveEgg(player, name)
+	return success and "Success!" or "Failed: no available slot"
 end

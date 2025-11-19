@@ -19,6 +19,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 -- === MODULES
 local Debug = require(Utility.Debug)(script)
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
+local BrainrotEggService = require(ServerScriptService.Modules.BrainrotEggService)
 local UnitService = require(ServerScriptService.Modules.UnitService)
 local MoneyService = require(ServerScriptService.Modules.MoneyService)
 
@@ -509,10 +510,21 @@ function StockService:HandleBuyItem(player: Player, payload: table?): table
 		})
 	end
 
+	local success: boolean
+	if itemDefinition.IsBrainrot then
+		success = BrainrotEggService:TryGiveEgg(player, itemDefinition.Name)
+	else
+		UnitService:Give(player, itemDefinition.Name, itemPayload.Type)
+	end
+
+	if not success then
+		return Response.makeError(Response.MESSAGES.UNAVAILABLE_SLOT, {
+			itemName = itemDefinition.Name,
+		})
+	end
+
 	MoneyService:ConsumeMoney(player, itemDefinition.Price)
 	entry.Quantity = available - 1
-	UnitService:Give(player, itemDefinition.Name, itemPayload.Type)
-
 	return Response.makeSuccess(Response.MESSAGES.ITEM_PURCHASED, {
 		itemName = itemDefinition.Name,
 		remainingStock = entry.Quantity,
@@ -626,7 +638,15 @@ function StockService:ProcessReceipt(receiptInfo: table): Enum.ProductPurchaseDe
 			if not itemType then
 				error(`Unable to resolve item type for {tostring(itemName)}`)
 			end
-			UnitService:Give(player, itemName, itemType)
+			local itemDefinition: ET.Item? = getItemDefinitionByCategory(categoryName, itemName)
+			if itemDefinition.IsBrainrot then
+				local success: boolean = BrainrotEggService:TryGiveEgg(player, itemName)
+				if not success then
+					error("Failed to give Brainrot Egg to player: no available slot")
+				end
+			else
+				UnitService:Give(player, itemName, itemType)
+			end
 			fireRemoteEvent(player, "RobuxItemPurchaseFulfilled", Response.MESSAGES.ITEM_PURCHASED, {
 				itemName = itemName,
 				category = categoryName,

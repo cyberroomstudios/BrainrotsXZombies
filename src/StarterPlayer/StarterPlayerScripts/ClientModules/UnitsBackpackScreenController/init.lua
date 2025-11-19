@@ -86,7 +86,14 @@ function UnitsBackpackScreenController:InitBridgeListener(): ()
 			local unitName: string = response.UnitName
 			local unitType: string = response.UnitType
 			local amount: number = response.Amount
-			Wrapper:SetItemQuantity(encode(unitType, unitName), amount)
+			local key = encode(unitType, unitName)
+
+			-- If Items exists and this is a new item, create it first
+			if action == "ItemAdded" and Wrapper.Items and not Wrapper.Items[key] then
+				Wrapper:CreateItem(key, amount)
+			else
+				Wrapper:SetItemQuantity(key, amount)
+			end
 		end
 	end)
 end

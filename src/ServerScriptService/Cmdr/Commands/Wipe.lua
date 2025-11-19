@@ -1,13 +1,13 @@
 return {
-	Name = script.Name;
-	Aliases = {"wipe"};
-	Description = "Wipes a player data";
-	Group = "Admin";
+	Name = script.Name,
+	Aliases = { "wipe" },
+	Description = "Wipes a player data",
+	Group = "Admin",
 	Args = {
 		{
-			Type = "players";
-			Name = "from";
-			Description = "The players to wipe the data";
+			Type = "players",
+			Name = "players",
+			Description = "The players to wipe the data",
 		},
-	};
+	},
 }

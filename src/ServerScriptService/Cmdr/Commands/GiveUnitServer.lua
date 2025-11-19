@@ -1,10 +1,7 @@
 local ServerScriptService = game:GetService("ServerScriptService")
-
-local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local UnitService = require(ServerScriptService.Modules.UnitService)
 
-return function(context, player,unitType: string, unitName: string )
-	UnitService:Give(player, unitName, unitType)
-
+return function(context: any, player: Player, category: string, name: string): string
+	UnitService:Give(player, name, category)
 	return "Success!"
 end

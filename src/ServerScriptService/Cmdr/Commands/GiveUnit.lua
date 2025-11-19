@@ -1,27 +1,25 @@
 return {
 	Name = script.Name,
 	Aliases = { "GiveUnit" },
-	Description = "Give Unit to PLayer",
+	Description = "Give Unit to target player",
 	Group = "Admin",
 	Args = {
 		{
 			Type = "player",
-			Name = "from",
-			Description = "Player",
+			Name = "player",
+			Description = "Target player",
 		},
 
 		{
 			Type = "string",
-			Name = "type",
-			Description = "Unit Type",
+			Name = "category",
+			Description = "Unit category",
 		},
 
 		{
 			Type = "string",
-			Name = "unit",
-			Description = "Unit Name",
+			Name = "name",
+			Description = "Unit name",
 		},
-
-		
 	},
 }
