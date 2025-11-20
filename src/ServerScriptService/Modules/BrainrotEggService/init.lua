@@ -78,6 +78,8 @@ function BrainrotEggService:TryGiveEgg(player: Player, brainrotEggName: string):
 	assert(BrainrotEgg[brainrotEggName], "Brainrot Egg must exist in BrainrotEgg enum")
 
 	local success: boolean = false
+	local addedSlotIndex: number? = nil
+	local addedEgg: EggBackpackEntry? = nil
 	PlayerDataHandler:Update(
 		player,
 		"brainrotEggsBackpack",
@@ -88,6 +90,8 @@ function BrainrotEggService:TryGiveEgg(player: Player, brainrotEggName: string):
 					value.CreatedTimestamp = DateTime.now().UnixTimestamp
 					value.HatchTimestamp = value.CreatedTimestamp + BrainrotEgg[brainrotEggName].TimeToHatch
 					success = true
+					addedSlotIndex = idx
+					addedEgg = value
 					BrainrotEggService:SetEggOnMap(player, idx, value)
 					return current
 				end
@@ -96,6 +100,21 @@ function BrainrotEggService:TryGiveEgg(player: Player, brainrotEggName: string):
 			return current
 		end
 	)
+
+	-- Notify client about the new egg
+	if success and addedSlotIndex and addedEgg then
+		print(`[BrainrotEggService] Firing EggAdded bridge event to player {player.Name}`)
+		bridge:Fire(player, {
+			[actionIdentifier] = "EggAdded",
+			[statusIdentifier] = "success",
+			[messageIdentifier] = "Egg added to backpack",
+			slotIndex = addedSlotIndex,
+			eggData = addedEgg,
+		})
+	else
+		print(`[BrainrotEggService] Failed to add egg {brainrotEggName} for player {player.Name}`)
+	end
+
 	return success
 end
 
@@ -202,6 +221,16 @@ function BrainrotEggService:MarkEggAsHatched(player: Player, slotIndex: number):
 	-- Update BillboardGui to show "Ready to Collect"
 	billboardGui:SetHatched()
 
+	-- Notify client that the egg has hatched
+	print(`[BrainrotEggService] Firing EggHatched bridge event to player {player.Name}`)
+	bridge:Fire(player, {
+		[actionIdentifier] = "EggHatched",
+		[statusIdentifier] = "success",
+		[messageIdentifier] = "Egg has hatched",
+		slotIndex = slotIndex,
+		eggData = egg,
+	})
+
 	-- Add visual effect (glow or sparkle)
 	local sparkles = Instance.new("Sparkles")
 	sparkles.SparkleColor = Color3.fromRGB(255, 255, 0)
@@ -258,7 +287,16 @@ function BrainrotEggService:MarkEggAsHatched(player: Player, slotIndex: number):
 		end
 		eggModel:Destroy()
 
-		print(`Player {player.Name} collected hatched egg: {egg.UnitName}`)
+		print(`[BrainrotEggService] Player {player.Name} collected hatched egg: {egg.UnitName}`)
+
+		-- Notify client to update the UI
+		bridge:Fire(player, {
+			[actionIdentifier] = "EggCollected",
+			[statusIdentifier] = "success",
+			[messageIdentifier] = "Egg collected",
+			slotIndex = slotIndex,
+			eggData = egg,
+		})
 	end)
 end
 
@@ -266,13 +304,23 @@ function BrainrotEggService:UpdateHatchingProgress(): ()
 	local currentTime = DateTime.now().UnixTimestamp
 
 	for player, eggs in pairs(EggModelsByPlayer) do
+		local eggsForPlayer = {}
 		for slotIndex, eggData in pairs(eggs) do
-			-- Skip if already hatched
+			local egg = eggData.Entry
+			-- Collect egg info to send to client (include hatched state)
+			table.insert(eggsForPlayer, {
+				slotIndex = slotIndex,
+				UnitName = egg and egg.UnitName or nil,
+				CreatedTimestamp = egg and egg.CreatedTimestamp or nil,
+				HatchTimestamp = egg and egg.HatchTimestamp or nil,
+				IsHatched = eggData.IsHatched and true or false,
+			})
+
+			-- Skip if already hatched for progress update
 			if eggData.IsHatched then
 				continue
 			end
 
-			local egg = eggData.Entry
 			local billboardGui = eggData.BillboardGui
 
 			-- Check if egg has hatched
@@ -286,9 +334,18 @@ function BrainrotEggService:UpdateHatchingProgress(): ()
 				local timeRemaining = egg.HatchTimestamp - currentTime
 
 				-- Use the modularized BillboardGui to update progress
-				billboardGui:UpdateProgress(progress, timeRemaining)
+				if billboardGui then
+					billboardGui:UpdateProgress(progress, timeRemaining)
+				end
 			end
 		end
+
+		-- Send TimePassed event with all eggs data for this player (client will update UI)
+		bridge:Fire(player, {
+			[actionIdentifier] = "TimePassed",
+			eggs = eggsForPlayer,
+			currentTime = currentTime,
+		})
 	end
 end
 

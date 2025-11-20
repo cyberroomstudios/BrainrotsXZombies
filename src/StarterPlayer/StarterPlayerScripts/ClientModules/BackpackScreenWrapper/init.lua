@@ -19,9 +19,11 @@ export type BackpackScreenWrapper = {
 	Open: (self: BackpackScreenWrapper) -> (),
 	Close: (self: BackpackScreenWrapper) -> (),
 	Toggle: (self: BackpackScreenWrapper) -> (),
-	CreateItem: (self: BackpackScreenWrapper, key: string, amount: number?) -> ItemsDictionary,
+	CreateItem: (self: BackpackScreenWrapper, key: string) -> ItemsDictionary,
+	RemoveItem: (self: BackpackScreenWrapper, key: string) -> (),
 	BuildItems: (self: BackpackScreenWrapper, entries: { Entry }) -> (),
 	SetItemQuantity: (self: BackpackScreenWrapper, key: string, amount: number?) -> (),
+	SetItemQuantityText: (self: BackpackScreenWrapper, key: string, text: string) -> (),
 	OnItemActivated: ((key: string) -> ())?,
 	OnOpen: (() -> ())?,
 	OnClose: (() -> ())?,
@@ -90,7 +92,7 @@ function BackpackScreenWrapper:Toggle(): ()
 	end
 end
 
-function BackpackScreenWrapper:CreateItem(key: string, amount: number?): ItemsDictionary
+function BackpackScreenWrapper:CreateItem(key: string): ItemsDictionary
 	self.Items = self.Items or {}
 	if self.Items[key] then
 		warn(`BackpackScreenWrapper: item {key} already exists.`)
@@ -113,9 +115,7 @@ function BackpackScreenWrapper:CreateItem(key: string, amount: number?): ItemsDi
 	end)
 
 	local quantityLabel = itemButton:FindFirstChild("Quantity", true)
-	if quantityLabel and quantityLabel:IsA("TextLabel") then
-		quantityLabel.Text = amount and `x{amount}` or ""
-	else
+	if not quantityLabel or not quantityLabel:IsA("TextLabel") then
 		warn(`BackpackScreenWrapper: quantity label not found for {key}.`)
 		quantityLabel = nil
 	end
@@ -128,6 +128,18 @@ function BackpackScreenWrapper:CreateItem(key: string, amount: number?): ItemsDi
 	return self.Items
 end
 
+function BackpackScreenWrapper:RemoveItem(key: string): ()
+	if not self.Items or not self.Items[key] then
+		return
+	end
+
+	local item = self.Items[key]
+	if item.Button then
+		item.Button:Destroy()
+	end
+	self.Items[key] = nil
+end
+
 function BackpackScreenWrapper:BuildItems(entries: { Entry }?): ItemsDictionary
 	if typeof(entries) ~= "table" then
 		warn("BackpackScreenWrapper: expected table of units while building items.")
@@ -136,18 +148,24 @@ function BackpackScreenWrapper:BuildItems(entries: { Entry }?): ItemsDictionary
 
 	local items: ItemsDictionary = {}
 	for _, unit in pairs(entries) do
-		items = self:CreateItem(unit.Key, unit.Amount)
+		items = self:CreateItem(unit.Key)
+		if unit.Amount then
+			self:SetItemQuantity(unit.Key, unit.Amount)
+		end
 	end
 	return items
 end
 
 function BackpackScreenWrapper:SetItemQuantity(key: string, amount: number?): ()
+	local text = amount and `x{amount}` or ""
+	self:SetItemQuantityText(key, text)
+end
+
+function BackpackScreenWrapper:SetItemQuantityText(key: string, text: string): ()
 	if self.Items then
 		local item = self.Items[key]
-		if item then
-			if item.QuantityLabel then
-				item.QuantityLabel.Text = amount and `x{amount}` or ""
-			end
+		if item and item.QuantityLabel then
+			item.QuantityLabel.Text = text
 		end
 	end
 end
