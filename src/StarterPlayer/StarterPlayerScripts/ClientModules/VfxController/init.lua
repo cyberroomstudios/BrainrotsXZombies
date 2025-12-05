@@ -5,6 +5,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 -- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Response = require(Utility.Response)
 local bridge = BridgeNet2.ReferenceBridge("VfxService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -25,7 +26,7 @@ local function onInvoke(methodName: string, ...): ...any
 	if typeof(response) ~= "table" then
 		return response
 	end
-	if response[statusIdentifier] == "error" then
+	if response[statusIdentifier] == Response.STATUS.ERROR then
 		Debug.warn("Server rejected VFX invoke:", response[messageIdentifier])
 		return nil
 	end

@@ -7,6 +7,7 @@ local ServerScriptService = game:GetService("ServerScriptService")
 -- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Response = require(Utility.Response)
 local bridge = BridgeNet2.ReferenceBridge("PlayerLoaded")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -19,8 +20,8 @@ bridgePlayer.OnServerInvoke = function(player, data)
 	if data[actionIdentifier] == "getPlayerData" then
 		local playerData = PlayerDataHandler:GetAll(player)
 		return {
-			[statusIdentifier] = "success",
-			[messageIdentifier] = "Player data retrieved",
+			[statusIdentifier] = Response.STATUS.SUCCESS,
+			[messageIdentifier] = Response.MESSAGES.PLAYER_DATA_RETRIEVED,
 			playerData = playerData,
 		}
 	end
@@ -38,6 +39,7 @@ local DATA_TEMPLATE: { [string]: any } = {
 		[3] = {},
 	},
 	weapons = {}, -- Representa todas as armas que o jogador possui
+	equippedWeapon = nil, -- Representa a arma equipada atualmente pelo jogador
 	money = 0, -- Representa o dinheiro do jogador
 	restockCycle = 0,
 	maxWave = 0, -- Representa a onda máxima que aquele jogador chegou
@@ -74,8 +76,8 @@ local function onPlayerAdded(player: Player): ()
 		profile:Reconcile()
 		bridge:Fire(player, {
 			[actionIdentifier] = "PlayerLoaded",
-			[statusIdentifier] = "success",
-			[messageIdentifier] = "Player data loaded",
+			[statusIdentifier] = Response.STATUS.SUCCESS,
+			[messageIdentifier] = Response.MESSAGES.PLAYER_DATA_LOADED,
 			data = profile.Data,
 		})
 	else

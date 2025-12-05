@@ -15,12 +15,13 @@ type EggBackpackEntry = {
 
 -- === MODULES
 local BaseService = require(ServerScriptService.Modules.BaseService)
+local BrainrotEggBillboardGui = require(script.BrainrotEggBillboardGui)
 local PlayerDataHandler = require(ServerScriptService.Modules.Player.PlayerDataHandler)
 local UnitService = require(ServerScriptService.Modules.UnitService)
-local BrainrotEggBillboardGui = require(script.BrainrotEggBillboardGui)
 -- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Response = require(Utility.Response)
 local bridge = BridgeNet2.ReferenceBridge("BrainrotEggService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -65,8 +66,8 @@ function BrainrotEggService:InitBridgeListener(): ()
 			return BrainrotEggService:GetEggs(player)
 		else
 			return {
-				[statusIdentifier] = "error",
-				[messageIdentifier] = "Invalid action",
+				[statusIdentifier] = Response.STATUS.ERROR,
+				[messageIdentifier] = Response.MESSAGES.INVALID_ACTION,
 			}
 		end
 	end
@@ -106,8 +107,8 @@ function BrainrotEggService:TryGiveEgg(player: Player, brainrotEggName: string):
 		print(`[BrainrotEggService] Firing EggAdded bridge event to player {player.Name}`)
 		bridge:Fire(player, {
 			[actionIdentifier] = "EggAdded",
-			[statusIdentifier] = "success",
-			[messageIdentifier] = "Egg added to backpack",
+			[statusIdentifier] = Response.STATUS.SUCCESS,
+			[messageIdentifier] = Response.MESSAGES.EGG_ADDED,
 			slotIndex = addedSlotIndex,
 			eggData = addedEgg,
 		})
@@ -225,8 +226,8 @@ function BrainrotEggService:MarkEggAsHatched(player: Player, slotIndex: number):
 	print(`[BrainrotEggService] Firing EggHatched bridge event to player {player.Name}`)
 	bridge:Fire(player, {
 		[actionIdentifier] = "EggHatched",
-		[statusIdentifier] = "success",
-		[messageIdentifier] = "Egg has hatched",
+		[statusIdentifier] = Response.STATUS.SUCCESS,
+		[messageIdentifier] = Response.MESSAGES.EGG_HATCHED,
 		slotIndex = slotIndex,
 		eggData = egg,
 	})
@@ -292,8 +293,8 @@ function BrainrotEggService:MarkEggAsHatched(player: Player, slotIndex: number):
 		-- Notify client to update the UI
 		bridge:Fire(player, {
 			[actionIdentifier] = "EggCollected",
-			[statusIdentifier] = "success",
-			[messageIdentifier] = "Egg collected",
+			[statusIdentifier] = Response.STATUS.SUCCESS,
+			[messageIdentifier] = Response.MESSAGES.EGG_COLLECTED,
 			slotIndex = slotIndex,
 			eggData = egg,
 		})

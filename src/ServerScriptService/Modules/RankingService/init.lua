@@ -9,6 +9,7 @@ local Workspace = game:GetService("Workspace")
 -- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Response = require(Utility.Response)
 local bridge = BridgeNet2.ReferenceBridge("RankingService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -214,9 +215,7 @@ function RankingService:InitRankingBoards(): ()
 					end
 					RankingBoards[rankingType] = board
 				else
-					warn(
-						`[RankingService] Failed to initialise ranking UI for "{rankingType}": {boardOrError}`
-					)
+					warn(`[RankingService] Failed to initialise ranking UI for "{rankingType}": {boardOrError}`)
 				end
 			end
 		end
@@ -289,8 +288,8 @@ function RankingService:InitBridgeListener(): ()
 	bridge.OnServerInvoke = function(player: Player, data: table): table
 		if typeof(data) ~= "table" then
 			return {
-				[statusIdentifier] = "error",
-				[messageIdentifier] = "InvalidPayload",
+				[statusIdentifier] = Response.STATUS.ERROR,
+				[messageIdentifier] = Response.MESSAGES.INVALID_PAYLOAD,
 			}
 		end
 
@@ -299,8 +298,8 @@ function RankingService:InitBridgeListener(): ()
 			local rankingType = data.rankingType
 			if not isValidRankingType(rankingType) then
 				return {
-					[statusIdentifier] = "error",
-					[messageIdentifier] = "InvalidRankingType",
+					[statusIdentifier] = Response.STATUS.ERROR,
+					[messageIdentifier] = Response.MESSAGES.INVALID_RANKING_TYPE,
 				}
 			end
 
@@ -311,14 +310,14 @@ function RankingService:InitBridgeListener(): ()
 			local entries = RankingService:GetRanking(rankingType, count)
 			if not entries then
 				return {
-					[statusIdentifier] = "error",
-					[messageIdentifier] = "DataStoreError",
+					[statusIdentifier] = Response.STATUS.ERROR,
+					[messageIdentifier] = Response.MESSAGES.ORDERED_DATA_STORE_ERROR,
 				}
 			end
 
 			return {
-				[statusIdentifier] = "success",
-				[messageIdentifier] = "RankingFetched",
+				[statusIdentifier] = Response.STATUS.SUCCESS,
+				[messageIdentifier] = Response.MESSAGES.RANKING_DATA_RETRIEVED,
 				rankingType = rankingType,
 				entries = entries,
 			}
@@ -326,20 +325,20 @@ function RankingService:InitBridgeListener(): ()
 			local rankingType = data.rankingType
 			if rankingType and not isValidRankingType(rankingType) then
 				return {
-					[statusIdentifier] = "error",
-					[messageIdentifier] = "InvalidRankingType",
+					[statusIdentifier] = Response.STATUS.ERROR,
+					[messageIdentifier] = Response.MESSAGES.INVALID_RANKING_TYPE,
 				}
 			end
 			RankingService:UpdatePlayer(player, rankingType)
 			return {
-				[statusIdentifier] = "success",
-				[messageIdentifier] = "PlayerUpdated",
+				[statusIdentifier] = Response.STATUS.SUCCESS,
+				[messageIdentifier] = Response.MESSAGES.PLAYER_RANKING_UPDATED,
 			}
 		end
 
 		return {
-			[statusIdentifier] = "error",
-			[messageIdentifier] = "UnknownAction",
+			[statusIdentifier] = Response.STATUS.ERROR,
+			[messageIdentifier] = Response.MESSAGES.INVALID_ACTION,
 		}
 	end
 end

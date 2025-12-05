@@ -5,8 +5,8 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
 -- Init Bridge Net
 local Utility = ReplicatedStorage.Utility
-local Response = require(Utility.Response)
 local BridgeNet2 = require(Utility.BridgeNet2)
+local Response = require(Utility.Response)
 local bridge = BridgeNet2.ReferenceBridge("StockService")
 local actionIdentifier = BridgeNet2.ReferenceIdentifier("action")
 local statusIdentifier = BridgeNet2.ReferenceIdentifier("status")
@@ -173,9 +173,9 @@ local function invokeStockAction(action: string, payload: table?): table?
 	local status = response[statusIdentifier]
 	local message = response[messageIdentifier]
 
-	if status == "error" then
+	if status == Response.STATUS.ERROR then
 		warn(`[BaseShop] {action} failed: {message or "Unknown error"}`)
-	elseif status == "success" then
+	elseif status == Response.STATUS.SUCCESS then
 		if message then
 			print(`[BaseShop] {action}: {message}`)
 		end

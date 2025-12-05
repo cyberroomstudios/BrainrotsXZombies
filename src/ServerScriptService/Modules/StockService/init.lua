@@ -478,7 +478,7 @@ function StockService:InitBridgeListener(): ()
 		elseif action == "FetchItemRobuxPrice" then
 			return StockService:HandleFetchItemRobuxPrice(player, payload)
 		end
-		return Response.makeError(Response.MESSAGES.UNKNOWN_ACTION)
+		return Response.makeError(Response.MESSAGES.INVALID_ACTION)
 	end
 end
 

@@ -42,8 +42,8 @@ function PreviewService:InitBridgeListener(): ()
 			PreviewService:RemoveAllItems(player)
 		else
 			return {
-				[statusIdentifier] = "error",
-				[messageIdentifier] = "Invalid action",
+				[statusIdentifier] = Response.STATUS.ERROR,
+				[messageIdentifier] = Response.MESSAGES.INVALID_ACTION,
 			}
 		end
 	end

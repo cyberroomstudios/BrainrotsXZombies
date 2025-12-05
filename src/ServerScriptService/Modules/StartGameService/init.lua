@@ -65,7 +65,7 @@ function StartGameService:InitBridgeListener()
 			-- UnitService:Give(player, "SpikesLevel1", "SPIKES")
 
 			-- WeaponService:Give(player, "Fist")
-			-- WeaponService:Give(player, "Pistol")
+			WeaponService:Give(player, "Pistol")
 		end
 	end
 end

@@ -49,8 +49,8 @@ end
 local function onClientInvoke(player: Player, payload: any): any
 	if typeof(payload) ~= "table" then
 		return {
-			[statusIdentifier] = "error",
-			[messageIdentifier] = "Payload must be a table",
+			[statusIdentifier] = Response.STATUS.ERROR,
+			[messageIdentifier] = Response.MESSAGES.INVALID_PAYLOAD,
 		}
 	end
 
@@ -59,16 +59,16 @@ local function onClientInvoke(player: Player, payload: any): any
 
 	if typeof(methodName) ~= "string" then
 		return {
-			[statusIdentifier] = "error",
-			[messageIdentifier] = "Method must be a string",
+			[statusIdentifier] = Response.STATUS.ERROR,
+			[messageIdentifier] = Response.MESSAGES.INVALID_METHOD,
 		}
 	end
 
 	local callback = Wrapper[methodName]
 	if typeof(callback) ~= "function" then
 		return {
-			[statusIdentifier] = "error",
-			[messageIdentifier] = `Unknown method "{methodName}"`,
+			[statusIdentifier] = Response.STATUS.ERROR,
+			[messageIdentifier] = Response.MESSAGES.INVALID_METHOD,
 		}
 	end
 	local success, results
@@ -84,13 +84,13 @@ local function onClientInvoke(player: Player, payload: any): any
 	if not success then
 		Debug.warn("Failed to execute client invoke:", results)
 		return {
-			[statusIdentifier] = "error",
-			[messageIdentifier] = "Execution failed",
+			[statusIdentifier] = Response.STATUS.ERROR,
+			[messageIdentifier] = Response.MESSAGES.UNKNOWN,
 		}
 	end
 
 	return {
-		[statusIdentifier] = "ok",
+		[statusIdentifier] = Response.STATUS.SUCCESS,
 		data = results,
 	}
 end

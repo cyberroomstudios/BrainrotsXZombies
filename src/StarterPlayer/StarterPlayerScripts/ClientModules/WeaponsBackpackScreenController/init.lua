@@ -57,7 +57,21 @@ end
 function WeaponsBackpackScreenController:InitButtonListeners(): ()
 	Wrapper.OnItemActivated = function(key: string): ()
 		print(`Activated weapon item: {key}`)
-		-- TODO equip weapon
+		local result = weaponsBridge:InvokeServerAsync({
+			[actionIdentifier] = "TryEquip",
+			data = {
+				WeaponName = key,
+			},
+		})
+		if typeof(result) ~= "table" then
+			warn("WeaponsBackpackScreenController: unexpected response while trying to equip weapon.")
+			return
+		end
+		if result[statusIdentifier] == Response.STATUS.ERROR then
+			warn(`Failed to equip weapon {key}: {result[messageIdentifier]}`)
+		else
+			print(`Equipped weapon: {key}`)
+		end
 	end
 end
 
