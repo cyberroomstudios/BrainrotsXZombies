@@ -156,6 +156,7 @@ local function fetchRankingEntries(store: OrderedDataStore, rankingType: string,
 	return entries
 end
 
+-- === GLOBAL METHODS
 function RankingService.ResolveDisplayName(userId: number?): string
 	if userId == nil then
 		return "Unknown"
@@ -179,6 +180,7 @@ function RankingService.ResolveDisplayName(userId: number?): string
 	return resolvedName
 end
 
+-- === GLOBAL FUNCTIONS
 function RankingService:InitRankingBoards(): ()
 	table.clear(RankingBoards)
 

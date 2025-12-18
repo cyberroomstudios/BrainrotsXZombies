@@ -139,10 +139,10 @@ function PlayerDataHandler:Set(player: Player, key: string, value: any): ()
 	-- Check if key exists
 	-- assert(profile.Data[key], `Key "{key}" not found in player "{player.Name}" data.`)
 	-- Check if there is a type mismatch
-	assert(
-		type(value) == type(profile.Data[key]),
-		`Value type mismatch for key "{key}" in player "{player.Name}" data.`
-	)
+	local existing = profile.Data[key]
+	if existing ~= nil then
+		assert(type(value) == type(existing), `Value type mismatch for key "{key}" in player "{player.Name}" data.`)
+	end
 	profile.Data[key] = value
 	notifyObservers(player, key)
 end

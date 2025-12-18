@@ -322,7 +322,7 @@ local function ConvertRaycastToOverlapParams(rayParams: RaycastParams): OverlapP
 
 	overlapParams.FilterType = rayParams.FilterType
 	overlapParams.FilterDescendantsInstances = rayParams.FilterDescendantsInstances
-	overlapParams.IgnoreWater = rayParams.IgnoreWater
+	-- overlapParams.IgnoreWater = rayParams.IgnoreWater
 
 	pcall(function()
 		overlapParams.CollisionGroup = rayParams.CollisionGroup

@@ -15,6 +15,7 @@ local Weapons = table.freeze({
 		AmmoCapacity = 30,
 		ReloadTime = 2,
 		Type = UnitType.Ranged,
+		IsAutomatic = true,
 	},
 	Axe = {
 		Name = "Axe",
@@ -52,6 +53,7 @@ local Weapons = table.freeze({
 		AmmoCapacity = 30,
 		ReloadTime = 2.5,
 		Type = UnitType.Ranged,
+		IsAutomatic = true,
 	},
 	Minigun = {
 		Name = "Minigun",
@@ -61,6 +63,7 @@ local Weapons = table.freeze({
 		AmmoCapacity = 200,
 		ReloadTime = 5,
 		Type = UnitType.Ranged,
+		IsAutomatic = true,
 	},
 	NormalBat = {
 		Name = "NormalBat",
@@ -77,6 +80,7 @@ local Weapons = table.freeze({
 		AmmoCapacity = 32,
 		ReloadTime = 1.8,
 		Type = UnitType.Ranged,
+		IsAutomatic = true,
 	},
 	CappuccinoSword = {
 		Name = "CappuccinoSword",
@@ -109,6 +113,7 @@ local Weapons = table.freeze({
 		AmmoCapacity = 50,
 		ReloadTime = 3,
 		Type = UnitType.Ranged,
+		IsAutomatic = true,
 	},
 	NoobiniCrossbow = {
 		Name = "NoobiniCrossbow",

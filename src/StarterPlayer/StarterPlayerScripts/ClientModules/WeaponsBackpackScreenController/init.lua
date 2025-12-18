@@ -16,6 +16,7 @@ local messageIdentifier = BridgeNet2.ReferenceIdentifier("message")
 local UIReferences = require(Players.LocalPlayer.PlayerScripts.Util.UIReferences)
 local BackpackScreenWrapper = require(Players.LocalPlayer.PlayerScripts.ClientModules.BackpackScreenWrapper)
 local Tags = require(ReplicatedStorage.Enums.Tags)
+local Response = require(ReplicatedStorage.Utility.Response)
 
 -- === LOCAL VARIABLES
 local Wrapper: BackpackScreenWrapper.BackpackScreenWrapper?
@@ -82,7 +83,7 @@ function WeaponsBackpackScreenController:InitBridgeListener(): ()
 		end
 		local action = response[actionIdentifier]
 		if action == "WeaponAdded" then
-			Wrapper:SetItemQuantity(response.WeaponName)
+			Wrapper:SetItemQuantity(response.data.WeaponName)
 		end
 	end)
 end
